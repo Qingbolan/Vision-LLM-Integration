@@ -4,7 +4,7 @@
 [![pytorch](https://img.shields.io/badge/PyTorch_1.9+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
 [![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/ashleve/lightning-hydra-template#license)
 
-This project focuses on the automatic classification of concrete crack images. We implement ResNet and related models on the "Concrete Crack Images for Classification" dataset to solve this binary classification problem.
+This project focuses on the automatic classification of concrete crack images. We implement ResNet，AlexNet, Convolutional Neural Network(VGG16) and Vision Transformer(Vit) models on the "Concrete Crack Images for Classification" dataset to solve this binary classification problem.
 
 ## Code Structure
 
@@ -44,9 +44,25 @@ Please download the dataset from [Concrete Crack Images for Classification](http
 
 ## Project Overview
 
+### ResNet 50![image-20241015193834961](./assets/image-20241015193834961.png)
+
+### AlexNet
+
+![WhatsApp 图像2024-10-15于19.29.43_6d3c2c53](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-15%E4%BA%8E19.29.43_6d3c2c53.jpg)
+
+### Convolutional Neural Network(VGG16)
+
+![WhatsApp 图像2024-10-15于19.25.41_303f991c](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-15%E4%BA%8E19.25.41_303f991c.jpg)
+
+### Vision Transformer
+
+![image-20241015194113619](./assets/image-20241015194113619.png)
+
 ## Note
 
 More details and result discussions can be found in `main.py`.
+
+Before your experiment, please change the .yaml file. Set model.name as the model you want to try.
 
 ## Acknowledgement
 

@@ -1,0 +1,5 @@
+# ignore data\raw folder
+data/raw/Negative/*.jpg
+data/raw/Positive/*.jpg
+checkpoints/*.pth
+checkpoints/*.png

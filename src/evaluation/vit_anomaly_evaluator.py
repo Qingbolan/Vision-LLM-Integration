@@ -39,8 +39,9 @@ def evaluate_vit_anomaly(model, dataloader, device, metrics=["accuracy", "precis
         plt.xlabel('Predicted')
         plt.ylabel('True')
         plt.title('Confusion Matrix')
-        plt.savefig(os.path.join(checkpoint_path, 'vit_anomaly_confusion_matrix.png'))
+        confusion_matrix_path = os.path.join(checkpoint_path, 'vit_anomaly_confusion_matrix.png')
+        plt.savefig(confusion_matrix_path)
         plt.close()
-        print(f'Confusion matrix saved at {os.path.join(checkpoint_path, "vit_anomaly_confusion_matrix.png")}')
+        print(f'Confusion matrix saved at {confusion_matrix_path}')
 
     return results

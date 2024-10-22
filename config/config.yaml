@@ -7,20 +7,20 @@ data:
   train_split: 0.8
 
 method:
-  type: supervised          # supervised, unsupervised
+  type: unsupervised          # Available options: supervised, unsupervised
 
   supervised:
     model:
-      name: resnet50        # resnet50, alexnet, vgg16, vit, efficientnet
+      name: alexnet           # Available options: resnet50, alexnet, vgg16, vit, efficientnet
       pretrained: true
       num_classes: 2
       learning_rate: 0.0001
       weight_decay: 0.00001
-      num_epochs: 25
+      num_epochs: 1
       device: cuda
 
   unsupervised:
-    method: dcae            # dcae, dcvae, vit_anomaly
+    method: vit_anomaly        # Available options: dcae, dcvae, vit_anomaly
 
     dcae:
       model:
@@ -28,7 +28,7 @@ method:
         encoded_space_dim: 128
         learning_rate: 0.0001
         weight_decay: 0.00001
-        num_epochs: 25
+        num_epochs: 1
         device: cuda
 
     dcvae:
@@ -37,18 +37,27 @@ method:
         encoded_space_dim: 128
         learning_rate: 0.0001
         weight_decay: 0.00001
-        num_epochs: 25
+        num_epochs: 1
         device: cuda
 
     vit_anomaly:
       model:
         name: vit_anomaly
-        pretrained: true
-        num_classes: 2
-        learning_rate: 0.0001
-        weight_decay: 0.00001
-        num_epochs: 25
-        device: cuda
+        pretrained: true                # Whether to use pretrained ViT weights
+        num_classes: 2                  # Number of classification classes
+
+        # Additional hyperparameters for ViTAnomalyDetector
+        img_size: 224                   # Input image size
+        patch_size: 16                  # Patch size for ViT
+        embed_dim: 768                  # Embedding dimension
+        num_heads: 12                   # Number of attention heads
+        mlp_dim: 3072                   # MLP layer dimension
+        num_layers: 12                  # Number of Transformer encoder layers
+
+        learning_rate: 0.0001           # Optimizer learning rate
+        weight_decay: 0.00001           # Optimizer weight decay
+        num_epochs: 1                   # Total number of training epochs
+        device: cuda                    # 'cuda' or 'cpu'
 
 training:
   checkpoint_path: ./checkpoints/

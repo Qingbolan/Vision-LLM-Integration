@@ -11,7 +11,6 @@ from src.models import (
     get_alexnet_model, 
     get_vgg_model, 
     get_vit_model, 
-    get_efficientnet_model,
     get_vit_anomaly_model,
     get_autoencoder_model,
     get_variational_autoencoder_model,
@@ -35,8 +34,6 @@ def get_model(model_config, device):
         return get_vgg_model(pretrained=pretrained, num_classes=num_classes).to(device)
     elif model_name == 'vit':
         return get_vit_model(pretrained=pretrained, num_classes=num_classes).to(device)
-    elif model_name == 'efficientnet':
-        return get_efficientnet_model(pretrained=pretrained, num_classes=num_classes).to(device)
     elif model_name == 'dcae':
         encoded_space_dim = model_config.get('encoded_space_dim', 128)
         return get_autoencoder_model(encoded_space_dim=encoded_space_dim).to(device)
@@ -44,33 +41,58 @@ def get_model(model_config, device):
         encoded_space_dim = model_config.get('encoded_space_dim', 128)
         return get_variational_autoencoder_model(encoded_space_dim=encoded_space_dim).to(device)
     elif model_name == 'vit_anomaly':
-        return get_vit_anomaly_model(pretrained=pretrained, num_classes=num_classes).to(device)
+        # 提取额外的参数
+        img_size = model_config.get('img_size', 224)
+        patch_size = model_config.get('patch_size', 16)
+        embed_dim = model_config.get('embed_dim', 768)
+        num_heads = model_config.get('num_heads', 12)
+        mlp_dim = model_config.get('mlp_dim', 3072)
+        num_layers = model_config.get('num_layers', 12)
+        
+        return get_vit_anomaly_model(
+            pretrained=pretrained,
+            num_classes=num_classes,
+            img_size=img_size,
+            patch_size=patch_size,
+            embed_dim=embed_dim,
+            num_heads=num_heads,
+            mlp_dim=mlp_dim,
+            num_layers=num_layers
+        ).to(device)
     else:
         raise ValueError(f"Unsupported model name: {model_name}")
 
 def main(config_path='config/config.yaml'):
-    # 加载配置
+    # Load configuration
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
-    # 设置设备
-    device = torch.device(config['model']['device'] if torch.cuda.is_available() else 'cpu')
+    # Set device
+    method_type = config['method']['type'].lower()
+    if method_type == 'supervised':
+        device = torch.device(config['method']['supervised']['model']['device'] if torch.cuda.is_available() else 'cpu')
+    elif method_type == 'unsupervised':
+        unsupervised_method = config['method']['unsupervised']['method'].lower()
+        device = torch.device(config['method']['unsupervised'][unsupervised_method]['model']['device'] if torch.cuda.is_available() else 'cpu')
+    else:
+        raise ValueError(f"Unsupported method type: {method_type}")
+
     print(f'Using device: {device}')
 
-    # 加载数据
+    # load data
     train_files, train_labels, val_files, val_labels = load_data(
         raw_data_path=config['data']['raw_data_path'],
         train_split=config['data']['train_split']
     )
 
-    # 获取数据预处理
+    # get data transforms
     train_transforms, val_transforms = get_transforms(config['data']['image_size'])
 
-    # 创建数据集
+    # build datasets
     train_dataset = ConcreteCrackDataset(train_files, train_labels, transform=train_transforms)
     val_dataset = ConcreteCrackDataset(val_files, val_labels, transform=val_transforms)
 
-    # 创建数据加载器
+    # build dataloaders
     train_loader = DataLoader(train_dataset, batch_size=config['data']['batch_size'],
                               shuffle=True, num_workers=config['data']['num_workers'])
     val_loader = DataLoader(val_dataset, batch_size=config['data']['batch_size'],
@@ -81,22 +103,22 @@ def main(config_path='config/config.yaml'):
         'val': val_loader
     }
 
-    # 根据学习方法选择执行路径
+    # according to the method type, train the model
     method_type = config['method']['type'].lower()
 
     if method_type == 'supervised':
-        # 获取监督学习的模型配置
+        # gain supervised model config
         supervised_config = config['method']['supervised']['model']
-        # 初始化模型
+        # initialize model
         model = get_model(supervised_config, device)
-        # 定义损失函数和优化器
+        # define loss function and optimizer
         criterion = torch.nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=supervised_config['learning_rate'],
                                      weight_decay=supervised_config['weight_decay'])
-        # 创建检查点目录
+        # create checkpoint directory
         checkpoint_path = config['training']['checkpoint_path']
         os.makedirs(checkpoint_path, exist_ok=True)
-        # 训练模型
+        # train model
         trained_model = train_model(
             model=model,
             dataloaders=dataloaders,
@@ -107,7 +129,7 @@ def main(config_path='config/config.yaml'):
             checkpoint_path=checkpoint_path,
             save_every=config['training']['save_every']
         )
-        # 评估模型
+        # evaluate model
         evaluation_results = evaluate_model(
             model=trained_model,
             dataloader=val_loader,
@@ -122,29 +144,29 @@ def main(config_path='config/config.yaml'):
                 print(f"{metric}:\n{value}")
             else:
                 print(f"{metric}: {value:.4f}")
-        # 保存最终模型
+        # save final model
         final_model_path = os.path.join(checkpoint_path, f'{supervised_config["name"]}_final.pth')
         torch.save(trained_model.state_dict(), final_model_path)
         print(f'Final model saved at {final_model_path}')
 
     elif method_type == 'unsupervised':
-        # 获取非监督学习的具体方法
+        # gain unsupervised method
         unsupervised_method = config['method']['unsupervised']['method'].lower()
 
         if unsupervised_method in ['dcae', 'dcvae', 'vit_anomaly']:
-            # 获取对应方法的模型配置
+            # load model config
             method_config = config['method']['unsupervised'][unsupervised_method]['model']
-            # 初始化模型
+            # initialize model
             model = get_model(method_config, device)
-            # 定义损失函数和优化器
+            # define loss function and optimizer
             if unsupervised_method == 'dcae':
                 criterion = torch.nn.MSELoss()
                 optimizer = torch.optim.Adam(model.parameters(), lr=method_config['learning_rate'],
                                              weight_decay=method_config['weight_decay'])
-                # 创建检查点目录
+                # build checkpoint directory
                 checkpoint_path = config['training']['checkpoint_path']
                 os.makedirs(checkpoint_path, exist_ok=True)
-                # 训练自编码器
+                # train autoencoder
                 trained_model = train_autoencoder(
                     model=model,
                     dataloaders=dataloaders,
@@ -155,7 +177,7 @@ def main(config_path='config/config.yaml'):
                     checkpoint_path=checkpoint_path,
                     save_every=config['training']['save_every']
                 )
-                # 评估自编码器
+                # evaluate autoencoder
                 if unsupervised_method == 'dcae':
                     from src.evaluation.autoencoder_evaluator import evaluate_autoencoder
                     evaluate_autoencoder(
@@ -200,13 +222,14 @@ def main(config_path='config/config.yaml'):
                 )
 
             elif unsupervised_method == 'vit_anomaly':
-                criterion = torch.nn.CrossEntropyLoss()
+                # 对于 ViT-Anomaly 模型，使用交叉熵损失
+                criterion = nn.CrossEntropyLoss()
                 optimizer = torch.optim.Adam(model.parameters(), lr=method_config['learning_rate'],
                                              weight_decay=method_config['weight_decay'])
                 # 创建检查点目录
                 checkpoint_path = config['training']['checkpoint_path']
                 os.makedirs(checkpoint_path, exist_ok=True)
-                # 训练ViT-Anomaly模型
+                # 训练 ViT-Anomaly 模型
                 from src.training.vit_anomaly_trainer import train_vit_anomaly
                 trained_model = train_vit_anomaly(
                     model=model,
@@ -218,7 +241,7 @@ def main(config_path='config/config.yaml'):
                     checkpoint_path=checkpoint_path,
                     save_every=config['training']['save_every']
                 )
-                # 评估ViT-Anomaly模型
+                # 评估 ViT-Anomaly 模型
                 from src.evaluation.vit_anomaly_evaluator import evaluate_vit_anomaly
                 evaluation_results = evaluate_vit_anomaly(
                     model=trained_model,

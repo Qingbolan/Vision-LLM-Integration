@@ -1,67 +1,111 @@
 import torch
 import torch.nn as nn
-from torchvision import models
+import torch.nn.functional as F
 
-class DeepConvolutionalVariationalAutoencoder(nn.Module):
+class ConvolutionalVAE(nn.Module):
     def __init__(self, encoded_space_dim=128):
-        super(DeepConvolutionalVariationalAutoencoder, self).__init__()
+        super(ConvolutionalVAE, self).__init__()
         
-        # 编码器部分，使用预训练的ResNet50作为基础
-        resnet = models.resnet50(pretrained=True)
-        self.encoder = nn.Sequential(*list(resnet.children())[:-2])  # 去除最后两个层（平均池化和全连接层）
-        
-        # 添加自定义的编码层
-        self.enc_fc = nn.Sequential(
-            nn.Conv2d(2048, 1024, kernel_size=3, stride=2, padding=1),  # 输入: [batch, 2048, 7, 7], 输出: [batch, 1024, 4, 4]
+        # Encoder
+        self.encoder = nn.Sequential(
+            # First conv layer: 3 -> 48 channels
+            nn.Conv2d(3, 48, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(48),
             nn.ReLU(True),
-            nn.Conv2d(1024, 512, kernel_size=3, stride=2, padding=1),   # 输出: [batch, 512, 2, 2]
+            
+            # Second conv layer: 48 -> 96 channels
+            nn.Conv2d(48, 96, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(96),
+            nn.ReLU(True),
+            
+            # Third conv layer: 96 -> 192 channels
+            nn.Conv2d(96, 192, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(192),
             nn.ReLU(True)
         )
         
-        # 定义均值和对数方差的全连接层
-        self.fc_mu = nn.Linear(512*2*2, encoded_space_dim)
-        self.fc_logvar = nn.Linear(512*2*2, encoded_space_dim)
+        # FC layers for mean and variance
+        self.fc_mu = nn.Linear(192 * 28 * 28, encoded_space_dim)
+        self.fc_var = nn.Linear(192 * 28 * 28, encoded_space_dim)
         
-        # 解码部分
-        self.decoder_fc = nn.Sequential(
-            nn.Linear(encoded_space_dim, 512*2*2),
-            nn.ReLU(True)
-        )
+        # Decoder input
+        self.decoder_input = nn.Linear(encoded_space_dim, 192 * 28 * 28)
         
+        # Decoder (symmetric to encoder)
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(512, 1024, kernel_size=3, stride=2, padding=1, output_padding=0),  # 输出: [batch, 1024, 5, 5]
+            # First transposed conv: 192 -> 96 channels
+            nn.ConvTranspose2d(192, 96, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.BatchNorm2d(96),
             nn.ReLU(True),
-            nn.ConvTranspose2d(1024, 512, kernel_size=3, stride=2, padding=1, output_padding=1),   # 输出: [batch, 512, 10, 10]
+            
+            # Second transposed conv: 96 -> 48 channels
+            nn.ConvTranspose2d(96, 48, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.BatchNorm2d(48),
             nn.ReLU(True),
-            nn.ConvTranspose2d(512, 256, kernel_size=3, stride=2, padding=1, output_padding=1),    # 输出: [batch, 256, 20, 20]
-            nn.ReLU(True),
-            nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1),    # 输出: [batch, 128, 40, 40]
-            nn.ReLU(True),
-            nn.ConvTranspose2d(128, 3, kernel_size=3, stride=2, padding=1, output_padding=1),      # 输出: [batch, 3, 80, 80]
-            nn.Sigmoid()  # 输出范围 [0, 1]
+            
+            # Third transposed conv: 48 -> 3 channels
+            nn.ConvTranspose2d(48, 3, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.Sigmoid()
         )
         
     def encode(self, x):
+        # Encode input
         x = self.encoder(x)
-        x = self.enc_fc(x)
-        x = x.view(x.size(0), -1)
+        x = x.view(x.size(0), -1)  # Flatten
+        
+        # Get mean and variance
         mu = self.fc_mu(x)
-        logvar = self.fc_logvar(x)
-        return mu, logvar
+        log_var = self.fc_var(x)
+        
+        return mu, log_var
     
-    def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5 * logvar)
+    def reparameterize(self, mu, log_var):
+        """
+        Reparameterization trick to sample from N(mu, var) from N(0,1).
+        """
+        std = torch.exp(0.5 * log_var)
         eps = torch.randn_like(std)
         return mu + eps * std
-    
+        
     def decode(self, z):
-        z = self.decoder_fc(z)
-        z = z.view(z.size(0), 512, 2, 2)
-        z = self.decoder(z)
-        return z
+        # Decode latent vector
+        x = self.decoder_input(z)
+        x = x.view(x.size(0), 192, 28, 28)  # Reshape
+        x = self.decoder(x)
+        return x
     
     def forward(self, x):
-        mu, logvar = self.encode(x)
-        z = self.reparameterize(mu, logvar)
-        decoded = self.decode(z)
-        return decoded, mu, logvar
+        mu, log_var = self.encode(x)
+        z = self.reparameterize(mu, log_var)
+        return self.decode(z), mu, log_var
+    
+    def get_reconstruction_error(self, x, threshold=None):
+        """
+        Calculate reconstruction error and KL divergence
+        """
+        recon_x, mu, log_var = self.forward(x)
+        
+        # Reconstruction loss
+        recon_loss = F.mse_loss(recon_x, x, reduction='none').sum(dim=(1,2,3))
+        
+        # KL divergence
+        kl_div = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=1)
+        
+        # Total loss
+        total_loss = recon_loss + kl_div
+        
+        if threshold is not None:
+            return total_loss, total_loss > threshold
+        return total_loss
+
+def vae_loss_function(recon_x, x, mu, log_var):
+    """
+    VAE loss function = Reconstruction loss + KL divergence
+    """
+    # Reconstruction loss (MSE)
+    recon_loss = F.mse_loss(recon_x, x, reduction='sum')
+    
+    # KL divergence
+    kl_div = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+    
+    return recon_loss + kl_div

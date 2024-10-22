@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 
+import warnings
+warnings.filterwarnings("ignore", message="Torch was not compiled with flash attention")
+
 class ConvolutionalAutoencoder(nn.Module):
     def __init__(self, encoded_space_dim=128):
         super(ConvolutionalAutoencoder, self).__init__()

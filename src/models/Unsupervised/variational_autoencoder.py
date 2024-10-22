@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import warnings
+warnings.filterwarnings("ignore", message="Torch was not compiled with flash attention")
+
 class ConvolutionalVAE(nn.Module):
     def __init__(self, encoded_space_dim=128):
         super(ConvolutionalVAE, self).__init__()

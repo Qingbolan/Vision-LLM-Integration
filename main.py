@@ -18,7 +18,15 @@ from src.models import (
 from src.training.trainer import train_model
 from src.training.autoencoder_trainer import train_autoencoder
 from src.training.variational_autoencoder_trainer import train_variational_autoencoder
+from src.training.vit_anomaly_trainer import train_vit_anomaly
+
 from src.evaluation.evaluator import evaluate_model
+
+from src.evaluation.autoencoder_evaluator import evaluate_autoencoder
+from src.evaluation.variational_autoencoder_evaluator import evaluate_variational_autoencoder
+from src.evaluation.vit_anomaly_evaluator import evaluate_vit_anomaly
+
+import torch.nn.functional as F
 
 
 def get_model(model_config, device):
@@ -79,20 +87,20 @@ def main(config_path='config/config.yaml'):
 
     print(f'Using device: {device}')
 
-    # load data
+    # Load data
     train_files, train_labels, val_files, val_labels = load_data(
         raw_data_path=config['data']['raw_data_path'],
         train_split=config['data']['train_split']
     )
 
-    # get data transforms
+    # Get data transforms
     train_transforms, val_transforms = get_transforms(config['data']['image_size'])
 
-    # build datasets
+    # Build datasets
     train_dataset = ConcreteCrackDataset(train_files, train_labels, transform=train_transforms)
     val_dataset = ConcreteCrackDataset(val_files, val_labels, transform=val_transforms)
 
-    # build dataloaders
+    # Build dataloaders
     train_loader = DataLoader(train_dataset, batch_size=config['data']['batch_size'],
                               shuffle=True, num_workers=config['data']['num_workers'])
     val_loader = DataLoader(val_dataset, batch_size=config['data']['batch_size'],
@@ -103,22 +111,20 @@ def main(config_path='config/config.yaml'):
         'val': val_loader
     }
 
-    # according to the method type, train the model
-    method_type = config['method']['type'].lower()
-
+    # According to the method type, train the model
     if method_type == 'supervised':
-        # gain supervised model config
+        # Get supervised model config
         supervised_config = config['method']['supervised']['model']
-        # initialize model
+        # Initialize model
         model = get_model(supervised_config, device)
-        # define loss function and optimizer
-        criterion = torch.nn.CrossEntropyLoss()
+        # Define loss function and optimizer
+        criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=supervised_config['learning_rate'],
                                      weight_decay=supervised_config['weight_decay'])
-        # create checkpoint directory
+        # Create checkpoint directory
         checkpoint_path = config['training']['checkpoint_path']
         os.makedirs(checkpoint_path, exist_ok=True)
-        # train model
+        # Train model
         trained_model = train_model(
             model=model,
             dataloaders=dataloaders,
@@ -129,7 +135,7 @@ def main(config_path='config/config.yaml'):
             checkpoint_path=checkpoint_path,
             save_every=config['training']['save_every']
         )
-        # evaluate model
+        # Evaluate model
         evaluation_results = evaluate_model(
             model=trained_model,
             dataloader=val_loader,
@@ -144,29 +150,31 @@ def main(config_path='config/config.yaml'):
                 print(f"{metric}:\n{value}")
             else:
                 print(f"{metric}: {value:.4f}")
-        # save final model
+        # Save final model
         final_model_path = os.path.join(checkpoint_path, f'{supervised_config["name"]}_final.pth')
         torch.save(trained_model.state_dict(), final_model_path)
         print(f'Final model saved at {final_model_path}')
 
     elif method_type == 'unsupervised':
-        # gain unsupervised method
+        # Get unsupervised method
         unsupervised_method = config['method']['unsupervised']['method'].lower()
 
         if unsupervised_method in ['dcae', 'dcvae', 'vit_anomaly']:
-            # load model config
+            # Load model config
             method_config = config['method']['unsupervised'][unsupervised_method]['model']
-            # initialize model
+            # Initialize model
             model = get_model(method_config, device)
-            # define loss function and optimizer
+            # Define loss function and optimizer
             if unsupervised_method == 'dcae':
-                criterion = torch.nn.MSELoss()
+                criterion = nn.MSELoss()
                 optimizer = torch.optim.Adam(model.parameters(), lr=method_config['learning_rate'],
                                              weight_decay=method_config['weight_decay'])
-                # build checkpoint directory
+                # Create checkpoint directory
                 checkpoint_path = config['training']['checkpoint_path']
                 os.makedirs(checkpoint_path, exist_ok=True)
-                # train autoencoder
+                # Retrieve threshold from config
+                threshold = config['evaluation']['anomaly_detection']['dcae']['threshold']
+                # Train DCAE model
                 trained_model = train_autoencoder(
                     model=model,
                     dataloaders=dataloaders,
@@ -177,30 +185,43 @@ def main(config_path='config/config.yaml'):
                     checkpoint_path=checkpoint_path,
                     save_every=config['training']['save_every']
                 )
-                # evaluate autoencoder
-                if unsupervised_method == 'dcae':
-                    from src.evaluation.autoencoder_evaluator import evaluate_autoencoder
-                    evaluate_autoencoder(
-                        model=trained_model,
-                        dataloader=val_loader,
-                        device=device,
-                        checkpoint_path=checkpoint_path,
-                        num_images=10
-                    )
+                # Evaluate DCAE model
+                evaluation_results = evaluate_autoencoder(
+                    model=trained_model,
+                    dataloader=val_loader,
+                    device=device,
+                    checkpoint_path=checkpoint_path,
+                    num_images=10,
+                    threshold=threshold
+                )
+                print("DCAE Evaluation Results:")
+                print(f"Average Reconstruction Loss (MSE): {evaluation_results['average_reconstruction_loss']:.6f}")
+                print(f"Accuracy: {evaluation_results['accuracy']:.4f}")
+                print(f"Precision: {evaluation_results['precision']:.4f}")
+                print(f"Recall: {evaluation_results['recall']:.4f}")
+                print(f"F1 Score: {evaluation_results['f1_score']:.4f}")
+                print(f'Confusion matrix saved at {os.path.join(checkpoint_path, "autoencoder_confusion_matrix.png")}')
+                print(f'Reconstruction images saved at {os.path.join(checkpoint_path, "autoencoder_reconstructions.png")}')
+                # Save final model
+                final_model_path = os.path.join(checkpoint_path, f'{unsupervised_method}_final.pth')
+                torch.save(trained_model.state_dict(), final_model_path)
+                print(f'Final model saved at {final_model_path}')
 
             elif unsupervised_method == 'dcvae':
                 def vae_loss_function(recon_x, x, mu, logvar):
-                    recon_loss = nn.functional.mse_loss(recon_x, x, reduction='sum')
-                    kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+                    recon_loss = F.mse_loss(recon_x, x, reduction='sum')
+                    kl_loss = -0.5 * torch.sum(1 + 2*logvar - mu.pow(2) - torch.exp(2*logvar))
                     return recon_loss + kl_loss
 
                 criterion = vae_loss_function
                 optimizer = torch.optim.Adam(model.parameters(), lr=method_config['learning_rate'],
                                              weight_decay=method_config['weight_decay'])
-                # 创建检查点目录
+                # Create checkpoint directory
                 checkpoint_path = config['training']['checkpoint_path']
                 os.makedirs(checkpoint_path, exist_ok=True)
-                # 训练变分自编码器
+                # Retrieve threshold from config
+                threshold = config['evaluation']['anomaly_detection']['dcvae']['threshold']
+                # Train DCVAE model
                 trained_model = train_variational_autoencoder(
                     model=model,
                     dataloaders=dataloaders,
@@ -211,26 +232,40 @@ def main(config_path='config/config.yaml'):
                     checkpoint_path=checkpoint_path,
                     save_every=config['training']['save_every']
                 )
-                # 评估变分自编码器
-                from src.evaluation.variational_autoencoder_evaluator import evaluate_variational_autoencoder
-                evaluate_variational_autoencoder(
+                # Evaluate DCVAE model
+                evaluation_results = evaluate_variational_autoencoder(
                     model=trained_model,
                     dataloader=val_loader,
                     device=device,
                     checkpoint_path=checkpoint_path,
-                    num_images=10
+                    num_images=10,
+                    threshold=threshold
                 )
+                print("DCVAE Evaluation Results:")
+                print(f"Average Reconstruction Loss (MSE): {evaluation_results['average_reconstruction_loss']:.6f}")
+                print(f"Average KL Divergence: {evaluation_results['average_kl_divergence']:.6f}")
+                print(f"Accuracy: {evaluation_results['accuracy']:.4f}")
+                print(f"Precision: {evaluation_results['precision']:.4f}")
+                print(f"Recall: {evaluation_results['recall']:.4f}")
+                print(f"F1 Score: {evaluation_results['f1_score']:.4f}")
+                print(f'Confusion matrix saved at {os.path.join(checkpoint_path, "variational_autoencoder_confusion_matrix.png")}')
+                print(f'Reconstruction images saved at {os.path.join(checkpoint_path, "variational_autoencoder_reconstructions.png")}')
+                # Save final model
+                final_model_path = os.path.join(checkpoint_path, f'{unsupervised_method}_final.pth')
+                torch.save(trained_model.state_dict(), final_model_path)
+                print(f'Final model saved at {final_model_path}')
 
             elif unsupervised_method == 'vit_anomaly':
-                # 对于 ViT-Anomaly 模型，使用交叉熵损失
+                # For ViT-Anomaly model, use CrossEntropyLoss
                 criterion = nn.CrossEntropyLoss()
                 optimizer = torch.optim.Adam(model.parameters(), lr=method_config['learning_rate'],
                                              weight_decay=method_config['weight_decay'])
-                # 创建检查点目录
+                # Create checkpoint directory
                 checkpoint_path = config['training']['checkpoint_path']
                 os.makedirs(checkpoint_path, exist_ok=True)
-                # 训练 ViT-Anomaly 模型
-                from src.training.vit_anomaly_trainer import train_vit_anomaly
+                # Retrieve threshold from config
+                threshold = config['evaluation']['anomaly_detection']['vit_anomaly']['threshold']
+                # Train ViT-Anomaly model
                 trained_model = train_vit_anomaly(
                     model=model,
                     dataloaders=dataloaders,
@@ -241,14 +276,14 @@ def main(config_path='config/config.yaml'):
                     checkpoint_path=checkpoint_path,
                     save_every=config['training']['save_every']
                 )
-                # 评估 ViT-Anomaly 模型
-                from src.evaluation.vit_anomaly_evaluator import evaluate_vit_anomaly
+                # Evaluate ViT-Anomaly model
                 evaluation_results = evaluate_vit_anomaly(
                     model=trained_model,
                     dataloader=val_loader,
                     device=device,
                     metrics=config['evaluation']['metrics'],
-                    checkpoint_path=checkpoint_path
+                    checkpoint_path=checkpoint_path,
+                    threshold=threshold
                 )
                 print("ViT-Anomaly Evaluation Results:")
                 for metric, value in evaluation_results.items():
@@ -256,8 +291,8 @@ def main(config_path='config/config.yaml'):
                         print(f"{metric}:\n{value}")
                     else:
                         print(f"{metric}: {value:.4f}")
-                # 保存最终模型
-                final_model_path = os.path.join(checkpoint_path, f'{method_config["name"]}_final.pth')
+                # Save final model
+                final_model_path = os.path.join(checkpoint_path, f'{unsupervised_method}_final.pth')
                 torch.save(trained_model.state_dict(), final_model_path)
                 print(f'Final model saved at {final_model_path}')
 

@@ -119,20 +119,21 @@ data/
 
 ## Models Implemented
 
-### ResNet50
+### Supervised(3)
+
+#### ResNet50
 
 ResNet50 introduces residual learning to ease the training of deep neural networks. It helps in avoiding vanishing gradient problems.
 
 ![ResNet Architecture][]
 ![image-20241015193834961](./assets/image-20241015193834961.png)
 
-### AlexNet
+#### AlexNet
 
 AlexNet is one of the pioneering models in deep learning, known for its success in the ImageNet competition.
 
 ![AlexNet Architecture][]
 ![WhatsApp 图像2024-10-15于19.29.43_6d3c2c53](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-15%E4%BA%8E19.29.43_6d3c2c53.jpg)
-
 
 ### VGG16
 
@@ -142,7 +143,7 @@ VGG16 uses very small (3x3) convolution filters, which showed that the depth of 
 
 ![WhatsApp 图像2024-10-15于19.25.41_303f991c](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-15%E4%BA%8E19.25.41_303f991c.jpg)
 
-### Vision Transformer (ViT)
+#### Vision Transformer (ViT)
 
 ViT applies the Transformer architecture directly to image recognition, with great success when pre-trained on large datasets.
 
@@ -150,29 +151,191 @@ ViT applies the Transformer architecture directly to image recognition, with gre
 
 ![image-20241015194113619](./assets/image-20241015194113619.png)
 
-### EfficientNet
+### Unsupervised(3)
 
-EfficientNet scales up networks using a compound coefficient, balancing network depth, width, and input resolution.
+#### Deep Convolutional Autoencoder (DCAE)
 
-![EfficientNet Architecture][]
+The Deep Convolutional Autoencoder (DCAE) is implemented with a symmetric encoder-decoder architecture designed specifically for concrete crack image processing. Our implementation follows a carefully designed structure:
 
-### Deep Convolutional Autoencoder (DCAE)
+**Architecture Details:**
 
-DCAE is an unsupervised learning method that learns efficient data codings in an unsupervised manner. It is effective for dimensionality reduction and feature learning.
+- **Encoder:**
 
-![DCAE Structure][]
+  - Conv2D (3→2048, kernel=3x3)
+  - Conv2D (2048→1024, kernel=3x3)
+  - Conv2D (1024→512, kernel=3x3)
+  - Fully Connected layer (512*2*2→128)
+- **Latent Space:**
 
-### Deep Convolutional Variational Autoencoder (DCVAE)
+  - 128-dimensional representation
+- **Decoder:**
 
-DCVAE extends the autoencoder architecture with a probabilistic approach to model the data distribution, enabling the generation of new data samples.
+  - Fully Connected layer (128→512*2*2)
+  - ConvTranspose2D (512→512, kernel=3x3)
+  - ConvTranspose2D (512→1024, kernel=3x3)
+  - ConvTranspose2D (1024→2048, kernel=3x3)
+  - ConvTranspose2D (2048→3, kernel=3x3)
 
-![DCVAE Structure][]
+![Deep Convolutional Autoencoder (DCAE)](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-22%E4%BA%8E12.05.39_17b2e6e8.jpg)
+*(Reference to (a) Convolutional Autoencoder in the diagram)*
 
-### Anomaly Detection using Vision Transformers
+#### Deep Convolutional Variational Autoencoder (DCVAE)
 
-Using ViT for anomaly detection leverages its ability to capture global relationships in data, making it suitable for detecting subtle irregularities in images.
+The Deep Convolutional Variational Autoencoder (DCVAE) extends the traditional autoencoder by introducing a probabilistic approach to the latent space encoding. Our implementation features:
 
-![ViT Anomaly Detection][]
+**Architecture Details:**
+
+- **Encoder:**
+
+  - Conv2D (3→2048, kernel=3x3)
+  - Conv2D (2048→1024, kernel=3x3)
+  - Conv2D (1024→512, kernel=3x3)
+  - Two parallel FC layers for μ and σ
+- **Latent Space:**
+
+  - Probabilistic sampling using the reparameterization trick
+  - Z ~ N(μ, σ²In)
+  - FC layer (512*2*2→128) for both mean and variance
+- **Decoder:**
+
+  - ConvTranspose2D (512→512, kernel=3x3)
+  - ConvTranspose2D (512→1024, kernel=3x3)
+  - ConvTranspose2D (1024→2048, kernel=3x3)
+  - Final reconstruction layer
+
+Key Features:
+
+- Stochastic latent representation
+- KL divergence regularization
+- Better generalization through variational inference
+
+![Deep Convolutional Variational Autoencoder (DCVAE)](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-22%E4%BA%8E12.05.39_17b2e6e8-1729581873230-50.jpg)
+*(Reference to (b) Convolutional Variational Autoencoder in the diagram)*
+
+Both architectures are designed to:
+
+- Maintain spatial information through convolutional operations
+- Provide efficient dimensionality reduction
+- Learn meaningful representations of concrete crack features
+- Enable anomaly detection through reconstruction error
+
+#### Anomaly Detection using Vision Transformers
+
+Our Vision Transformer (ViT) based anomaly detection system implements a specialized architecture designed specifically for concrete crack detection. The model consists of three main components as illustrated in the diagram:
+
+**1. Image Tokenization and Embedding:**
+
+- Input images are divided into fixed-size patches (shown as x1-x9 in the diagram)
+- Patches are arranged in a grid format (3x3 as shown)
+- Linear Embedding (E) projects each patch into a higher dimensional space
+- Special classification token (Vclass) is prepended to the sequence
+- Positional embeddings are added to retain spatial information
+
+**2. Transformer Encoder:**
+Each Transformer Encoder block contains:
+
+- Layer Normalization (LN)
+- Multi-Head Self Attention (MSA)
+  - Linear projections for Query (Q), Key (K), and Value (V)
+  - Scaled Dot-Product Attention mechanism
+  - h parallel attention heads
+  - Concatenation and linear projection of attention outputs
+- MLP block consisting of:
+  - Fully Connected Layer
+  - GeLU Activation
+  - Fully Connected Layer
+- Residual connections (+) around both MSA and MLP blocks
+
+**3. Classification Head:**
+
+- Final classification layer for anomaly detection
+- Uses the output corresponding to the classification token
+- Produces binary output (normal/anomaly)
+
+**Detailed Architecture:**
+
+![Anomaly Detection using Vision Transformers](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-21%E4%BA%8E12.21.59_d38439ad.jpg)
+
+```
+Input Image
+└── Patch + Position Embeddings
+    ├── Image patches (x1...x9)
+    ├── Linear embedding
+    ├── Classification token (Vclass)
+    └── Positional encoding
+  
+Transformer Encoder
+└── Multiple blocks of:
+    ├── Layer Norm (LN)
+    ├── Multi-Head Self Attention (MSA)
+    │   ├── Q, K, V linear projections
+    │   ├── Scaled dot-product attention
+    │   └── Multi-head concatenation
+    ├── Residual connection
+    ├── Layer Norm (LN)
+    ├── MLP
+    │   ├── Fully Connected
+    │   ├── GeLU
+    │   └── Fully Connected
+    └── Residual connection
+
+Classification Head
+└── Final classifier for anomaly detection
+```
+
+**Key Features:**
+
+1. **Patch-based Processing:**
+
+   - Divides input image into fixed-size patches
+   - Maintains spatial relationships through positional embeddings
+   - Enables parallel processing of image regions
+2. **Self-Attention Mechanism:**
+
+   - Captures global dependencies between patches
+   - Multiple attention heads for different feature aspects
+   - Scaled dot-product attention for stable training
+3. **MLP Block Design:**
+
+   - Two-layer feedforward network
+   - GeLU activation for non-linearity
+   - Residual connections for better gradient flow
+4. **Anomaly Detection Strategy:**
+
+   - Uses classification token's final representation
+   - Learns normal pattern characteristics
+   - Identifies deviations as potential anomalies
+
+This architecture is particularly effective for concrete crack detection because:
+
+- It can capture both local and global features
+- The attention mechanism helps focus on relevant image regions
+- The deep representation learning enables subtle anomaly detection
+- The patch-based approach is suitable for detecting crack patterns
+
+Implementation details and example usage can be found in `src/models/vit_anomaly.py` and `src/training/vit_anomaly_trainer.py`.
+
+**Usage Example:**
+
+```python
+# Model initialization
+model = ViTAnomalyDetector(
+    img_size=224,          # Input image size
+    patch_size=16,         # Size of each patch
+    embed_dim=768,         # Embedding dimension
+    num_heads=12,          # Number of attention heads
+    num_layers=12,         # Number of transformer blocks
+    mlp_ratio=4,          # MLP hidden dimension ratio
+    num_classes=2          # Binary classification
+)
+
+# Anomaly detection
+anomaly_scores = model.get_anomaly_score(images)
+predictions = anomaly_scores > threshold
+
+```
+
+![image-20241022164508392](./assets/image-20241022164508392.png)
 
 ## Experimentation and Results
 
@@ -189,27 +352,18 @@ We conducted extensive experiments with the aforementioned models to evaluate th
 **Experimental Findings**:
 
 1. **ResNet50** achieved high accuracy due to its deep architecture and residual connections, which help in learning complex features.
-
 2. **AlexNet**, despite being one of the earlier models, performed reasonably well but was outperformed by deeper networks.
-
 3. **VGG16** showed strong performance thanks to its depth, but at the cost of increased computational resources.
-
 4. **Vision Transformer (ViT)** demonstrated that transformer architectures can be effectively applied to image classification tasks, achieving competitive performance.
-
 5. **EfficientNet** provided an excellent balance between accuracy and computational efficiency due to its scalable architecture.
-
 6. **DCAE and DCVAE** were used for feature extraction and anomaly detection. While not directly classifying images, they helped in understanding the underlying data representation.
-
 7. **Anomaly Detection using ViT** highlighted the model's capacity to detect anomalies without explicit labels, which is valuable in scenarios with limited annotated data.
 
 **Observations**:
 
 - **Data Augmentation**: Implementing data augmentation techniques improved model generalization.
-
 - **Hyperparameter Tuning**: Careful tuning of learning rates, batch sizes, and optimizers was crucial for model convergence.
-
 - **Computational Resources**: Transformer-based models required more computational power, highlighting the need for efficient training strategies.
-
 - **Unsupervised Learning**: Including unsupervised methods like autoencoders provided additional insights into the data and potential for anomaly detection.
 
 ## Usage

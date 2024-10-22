@@ -20,7 +20,7 @@ method:
       device: cuda
 
   unsupervised:
-    method: vit_anomaly        # Available options: dcae, dcvae, vit_anomaly
+    method: dcae        # Available options: dcae, dcvae, vit_anomaly
 
     dcae:
       model:
@@ -34,7 +34,7 @@ method:
     dcvae:
       model:
         name: dcvae
-        encoded_space_dim: 128
+        encoded_space_dim: 128  # For VAE, this refers to latent_dim
         learning_rate: 0.0001
         weight_decay: 0.00001
         num_epochs: 1
@@ -66,3 +66,10 @@ training:
 evaluation:
   metrics: ["accuracy", "precision", "recall", "f1", "confusion_matrix"]
   clustering_metrics: ["silhouette_score", "calinski_harabasz_score", "davies_bouldin_score"]
+  anomaly_detection:
+    dcae:
+      threshold: 0.5                  # Example threshold, adjust based on data
+    dcvae:
+      threshold: 0.5                  # Example threshold, adjust based on data
+    vit_anomaly:
+      threshold: 0.5                  # Example threshold, adjust based on data

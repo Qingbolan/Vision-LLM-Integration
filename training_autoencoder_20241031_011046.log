@@ -1,0 +1,54 @@
+2024-10-31 01:10:46,595 - INFO - Epoch 1/10
+2024-10-31 01:10:46,595 - INFO - ----------
+2024-10-31 01:11:54,081 - INFO - train Loss: 0.5210
+2024-10-31 01:12:29,343 - INFO - val Loss: 0.3016
+2024-10-31 01:12:30,647 - INFO - Best model saved at epoch 1
+2024-10-31 01:12:30,647 - INFO - Epoch 2/10
+2024-10-31 01:12:30,647 - INFO - ----------
+2024-10-31 01:13:38,210 - INFO - train Loss: 0.4574
+2024-10-31 01:14:16,384 - INFO - val Loss: 0.2935
+2024-10-31 01:14:18,119 - INFO - Best model saved at epoch 2
+2024-10-31 01:14:18,119 - INFO - Epoch 3/10
+2024-10-31 01:14:18,119 - INFO - ----------
+2024-10-31 01:15:28,786 - INFO - train Loss: 0.4569
+2024-10-31 01:16:08,243 - INFO - val Loss: 0.2895
+2024-10-31 01:16:10,011 - INFO - Best model saved at epoch 3
+2024-10-31 01:16:10,011 - INFO - Epoch 4/10
+2024-10-31 01:16:10,011 - INFO - ----------
+2024-10-31 01:17:19,550 - INFO - train Loss: 0.4566
+2024-10-31 01:17:59,924 - INFO - val Loss: 0.2830
+2024-10-31 01:18:01,867 - INFO - Best model saved at epoch 4
+2024-10-31 01:18:01,867 - INFO - Epoch 5/10
+2024-10-31 01:18:01,867 - INFO - ----------
+2024-10-31 01:19:11,733 - INFO - train Loss: 0.4535
+2024-10-31 01:19:47,164 - INFO - val Loss: 0.2806
+2024-10-31 01:19:48,513 - INFO - Best model saved at epoch 5
+2024-10-31 01:19:49,762 - INFO - Checkpoint saved at epoch 5
+2024-10-31 01:19:49,762 - INFO - Epoch 6/10
+2024-10-31 01:19:49,762 - INFO - ----------
+2024-10-31 01:20:57,185 - INFO - train Loss: 0.4548
+2024-10-31 01:21:32,371 - INFO - val Loss: 0.2775
+2024-10-31 01:21:33,737 - INFO - Best model saved at epoch 6
+2024-10-31 01:21:33,737 - INFO - Epoch 7/10
+2024-10-31 01:21:33,737 - INFO - ----------
+2024-10-31 01:22:41,058 - INFO - train Loss: 0.4550
+2024-10-31 01:23:16,066 - INFO - val Loss: 0.2749
+2024-10-31 01:23:17,445 - INFO - Best model saved at epoch 7
+2024-10-31 01:23:17,446 - INFO - Epoch 8/10
+2024-10-31 01:23:17,446 - INFO - ----------
+2024-10-31 01:24:24,813 - INFO - train Loss: 0.4575
+2024-10-31 01:24:59,910 - INFO - val Loss: 0.2733
+2024-10-31 01:25:01,282 - INFO - Best model saved at epoch 8
+2024-10-31 01:25:01,282 - INFO - Epoch 9/10
+2024-10-31 01:25:01,282 - INFO - ----------
+2024-10-31 01:26:08,762 - INFO - train Loss: 0.4551
+2024-10-31 01:26:43,837 - INFO - val Loss: 0.2724
+2024-10-31 01:26:45,200 - INFO - Best model saved at epoch 9
+2024-10-31 01:26:45,200 - INFO - Epoch 10/10
+2024-10-31 01:26:45,201 - INFO - ----------
+2024-10-31 01:27:52,594 - INFO - train Loss: 0.4540
+2024-10-31 01:28:27,816 - INFO - val Loss: 0.2699
+2024-10-31 01:28:29,178 - INFO - Best model saved at epoch 10
+2024-10-31 01:28:30,434 - INFO - Checkpoint saved at epoch 10
+2024-10-31 01:28:30,434 - INFO - Training completed
+2024-10-31 01:28:30,436 - INFO - Best val Loss: 0.2699 at epoch 10

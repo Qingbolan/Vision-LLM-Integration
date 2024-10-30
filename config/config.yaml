@@ -12,11 +12,11 @@ method:
   supervised:
     model:
       name: alexnet           # Available options: resnet50, alexnet, vgg16, vit, efficientnet
-      pretrained: true
+      pretrained: False
       num_classes: 2
       learning_rate: 0.0001
       weight_decay: 0.00001
-      num_epochs: 1
+      num_epochs: 10
       device: cuda
 
   unsupervised:
@@ -25,16 +25,16 @@ method:
     dcae:
       model:
         name: dcae
-        encoded_space_dim: 128
+        encoded_space_dim: 256    # add encoded space dimension
         learning_rate: 0.0001
         weight_decay: 0.00001
-        num_epochs: 1
+        num_epochs: 10
         device: cuda
 
     dcvae:
       model:
         name: dcvae
-        encoded_space_dim: 128  # For VAE, this refers to latent_dim
+        encoded_space_dim: 256    # To VAE, this is the encoded space dimension
         learning_rate: 0.0001
         weight_decay: 0.00001
         num_epochs: 1
@@ -68,7 +68,7 @@ evaluation:
   clustering_metrics: ["silhouette_score", "calinski_harabasz_score", "davies_bouldin_score"]
   anomaly_detection:
     dcae:
-      threshold: 0.5                  # Example threshold, adjust based on data
+      threshold: 0.5                  # Example threshold, will be dynamically determined
     dcvae:
       threshold: 0.5                  # Example threshold, adjust based on data
     vit_anomaly:

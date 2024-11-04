@@ -1,0 +1,7 @@
+2024-11-01 00:43:21,645 - INFO - Epoch 1/1
+2024-11-01 00:43:21,645 - INFO - ----------
+2024-11-01 00:43:52,053 - INFO - train Loss: 0.0000 Acc: 0.0000
+2024-11-01 00:44:27,278 - INFO - val Loss: 0.5859 Acc: 0.7543
+2024-11-01 00:44:27,558 - INFO - Best model saved at epoch 1
+2024-11-01 00:44:27,558 - INFO - Training completed
+2024-11-01 00:44:27,558 - INFO - Best val Loss: 0.5859 at epoch 1

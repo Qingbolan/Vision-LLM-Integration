@@ -1,68 +1,149 @@
-import os
 import torch
-from torch import nn, optim
+import os
+import logging
+from datetime import datetime
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
-def train_model(model, dataloaders, criterion, optimizer, num_epochs, device, checkpoint_path=None, save_every=5):
-    best_acc = 0.0
+def train_model(
+    model,
+    dataloaders,
+    criterion,
+    optimizer,
+    num_epochs,
+    device,
+    checkpoint_path='./checkpoints',
+    save_every=5,
+    model_name="model",
+):
+    # Set up logging
+    log_filename = f'training_{model_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_filename),
+            logging.StreamHandler()
+        ]
+    )
 
+    # Check for existing model checkpoint
+    best_model_path = os.path.join(checkpoint_path, f'best_{model_name}.pth')
+    if os.path.exists(best_model_path):
+        logging.info(f"Loading existing model checkpoint from {best_model_path}")
+        checkpoint = torch.load(best_model_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        logging.info(f"Model loaded from checkpoint with best loss: {checkpoint['loss']}")
+        return model, checkpoint.get('training_stats', {})
+
+    # Prepare for training
+    best_loss = float('inf')
+    best_model_wts = model.state_dict()
+    training_stats = {
+        'train_losses': [],
+        'val_losses': [],
+        'best_epoch': 0
+    }
+
+    model = model.to(device)
+    
     for epoch in range(1, num_epochs + 1):
-        print(f'Epoch {epoch}/{num_epochs}')
-        print('-' * 10)
+        logging.info(f'Epoch {epoch}/{num_epochs}')
+        logging.info('-' * 10)
 
-        # Each epoch has a training and validation phase
         for phase in ['train', 'val']:
             if phase == 'train':
-                model.train()  # Set model to training mode
+                model.train()
             else:
-                model.eval()   # Set model to evaluate mode
+                model.eval()
 
             running_loss = 0.0
-            running_corrects = 0
+            batch_count = 0
 
-            # Iterate over data.
-            for inputs, labels in tqdm(dataloaders[phase]):
-                inputs = inputs.to(device)
-                labels = labels.to(device)
+            with tqdm(dataloaders[phase], desc=f'{phase}') as pbar:
+                for inputs, labels in pbar:
+                    try:
+                        inputs, labels = inputs.to(device), labels.to(device)
 
-                # zero the parameter gradients
-                optimizer.zero_grad()
+                        optimizer.zero_grad()
 
-                # forward
-                # track history only if in train
-                with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs)
-                    _, preds = torch.max(outputs, 1)
-                    loss = criterion(outputs, labels)
+                        with torch.set_grad_enabled(phase == 'train'):
+                            outputs = model(inputs)
+                            loss = criterion(outputs, labels)
 
-                    # backward + optimize only if in training phase
-                    if phase == 'train':
-                        loss.backward()
-                        optimizer.step()
+                            if phase == 'train':
+                                loss.backward()
+                                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                                optimizer.step()
 
-                # statistics
-                running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data)
+                        batch_size = inputs.size(0)
+                        running_loss += loss.item() * batch_size
+                        batch_count += batch_size
 
-            epoch_loss = running_loss / len(dataloaders[phase].dataset)
-            epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
+                        avg_loss = running_loss / batch_count
+                        pbar.set_postfix({'loss': f'{loss.item():.4f}', 'avg_loss': f'{avg_loss:.4f}'})
 
-            print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
+                    except Exception as e:
+                        logging.error(f"Error in batch processing: {str(e)}")
+                        continue
 
-            # deep copy the model
-            if phase == 'val' and epoch_acc > best_acc:
-                best_acc = epoch_acc
-                best_model_wts = model.state_dict()
+                epoch_loss = running_loss / len(dataloaders[phase].dataset)
+                logging.info(f'{phase} Loss: {epoch_loss:.4f}')
 
-        # Save checkpoint
+                # Record losses
+                if phase == 'val':
+                    training_stats['val_losses'].append(epoch_loss)
+                else:
+                    training_stats['train_losses'].append(epoch_loss)
+
+                # Update best model
+                if phase == 'val' and epoch_loss < best_loss:
+                    best_loss = epoch_loss
+                    best_model_wts = model.state_dict().copy()
+                    training_stats['best_epoch'] = epoch
+
+                    # Save best model
+                    if checkpoint_path:
+                        os.makedirs(checkpoint_path, exist_ok=True)
+                        torch.save({
+                            'epoch': epoch,
+                            'model_state_dict': best_model_wts,
+                            'optimizer_state_dict': optimizer.state_dict(),
+                            'loss': best_loss,
+                            'training_stats': training_stats
+                        }, best_model_path)
+                        logging.info(f'Best model saved at epoch {epoch}')
+
+        # Periodic checkpoint saving
         if checkpoint_path and epoch % save_every == 0:
-            torch.save(model.state_dict(), os.path.join(checkpoint_path, f'resnet50_epoch_{epoch}.pth'))
-            print(f'Checkpoint saved at epoch {epoch}')
+            checkpoint_file = os.path.join(checkpoint_path, f'checkpoint_epoch_{epoch}.pth')
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'train_loss': training_stats['train_losses'][-1],
+                'val_loss': training_stats['val_losses'][-1],
+                'training_stats': training_stats
+            }, checkpoint_file)
+            logging.info(f'Checkpoint saved at epoch {epoch}')
 
-    print('Training complete')
-    print(f'Best val Acc: {best_acc:.4f}')
+    logging.info('Training completed')
+    logging.info(f'Best val Loss: {best_loss:.4f} at epoch {training_stats["best_epoch"]}')
 
-    # load best model weights
-    if 'best_model_wts' in locals():
-        model.load_state_dict(best_model_wts)
-    return model
+    # Load best model weights
+    model.load_state_dict(best_model_wts)
+
+    # Plot loss per epoch
+    plt.figure()
+    plt.plot(training_stats['train_losses'], label='Train Loss')
+    plt.plot(training_stats['val_losses'], label='Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.title(f'{model_name} Loss per Epoch')
+    plot_path = os.path.join(checkpoint_path, f'{model_name}_loss_per_epoch.png')
+    plt.savefig(plot_path)
+    plt.close()
+    logging.info(f'Loss plot saved at {plot_path}')
+
+    return model, training_stats

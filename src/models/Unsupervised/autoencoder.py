@@ -1,6 +1,6 @@
-# src/models/Unsupervised/autoencoder.py
-
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class ConvolutionalAutoencoder(nn.Module):
     def __init__(self, encoded_space_dim=128):
@@ -15,7 +15,7 @@ class ConvolutionalAutoencoder(nn.Module):
             nn.Conv2d(128, 256, 4, stride=2, padding=1), # Output: (256, H/8, W/8)
             nn.ReLU(True),
             nn.Flatten(),
-            nn.Linear(256 * 28 * 28, encoded_space_dim), # Adjust according to image size
+            nn.Linear(256 * 28 * 28, encoded_space_dim),
             nn.ReLU(True),
         )
         
@@ -29,10 +29,10 @@ class ConvolutionalAutoencoder(nn.Module):
             nn.ConvTranspose2d(128, 64, 4, stride=2, padding=1),  # Output: (64, H/2, W/2)
             nn.ReLU(True),
             nn.ConvTranspose2d(64, 3, 4, stride=2, padding=1),    # Output: (3, H, W)
-            nn.Sigmoid(),
+            nn.ReLU(True),  # ReLU instead of Sigmoid at the last layer
         )
         
     def forward(self, x):
-        x = self.encoder(x)
-        x = self.decoder(x)
-        return x
+        x_encoded = self.encoder(x)
+        x_reconstructed = self.decoder(x_encoded)
+        return x_reconstructed

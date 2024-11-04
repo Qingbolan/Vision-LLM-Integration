@@ -10,7 +10,6 @@ def get_alexnet_model(pretrained=True, num_classes=2):
         weights = None
 
     model = models.alexnet(weights=weights)
-    # 修改分类器的最后一层
     model.classifier[6] = nn.Linear(model.classifier[6].in_features, num_classes)
 
     return model

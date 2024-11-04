@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
 import matplotlib.pyplot as plt
+import torch.optim as optim
 
 from src.data.dataset import load_data, ConcreteCrackDataset
 from src.data.preprocess import get_transforms
@@ -12,7 +13,7 @@ from src.models import (
     get_alexnet_model, 
     get_vgg_model, 
     get_vit_model, 
-    get_vit_anomaly_model,
+    UnsupervisedViTAnomalyDetector,
     get_autoencoder_model,
     get_variational_autoencoder_model,
 )
@@ -34,6 +35,8 @@ def get_model(model_config, device):
     model_name = model_config.get('name').lower()
     pretrained = model_config.get('pretrained', False)
     num_classes = model_config.get('num_classes', 2)
+    print(f"Model: {model_name}")
+    print(f"Pretrained: {pretrained}")
 
     if model_name == 'resnet50':
         return get_resnet_model(pretrained=pretrained, num_classes=num_classes).to(device)
@@ -50,17 +53,21 @@ def get_model(model_config, device):
         encoded_space_dim = model_config.get('encoded_space_dim', 128)
         return get_variational_autoencoder_model(encoded_space_dim=encoded_space_dim).to(device)
     elif model_name == 'vit_anomaly':
-        # 提取额外的参数
         img_size = model_config.get('img_size', 224)
         patch_size = model_config.get('patch_size', 16)
         embed_dim = model_config.get('embed_dim', 768)
         num_heads = model_config.get('num_heads', 12)
         mlp_dim = model_config.get('mlp_dim', 3072)
         num_layers = model_config.get('num_layers', 12)
-
-        return get_vit_anomaly_model(
+        
+        # 新增的参数
+        latent_dim = model_config.get('latent_dim', 240)  
+        pretrained = model_config.get('pretrained', False)  
+        
+        # 初始化无监督异常检测模型
+        model = UnsupervisedViTAnomalyDetector(
             pretrained=pretrained,
-            num_classes=num_classes,
+            latent_dim=latent_dim,
             img_size=img_size,
             patch_size=patch_size,
             embed_dim=embed_dim,
@@ -68,6 +75,8 @@ def get_model(model_config, device):
             mlp_dim=mlp_dim,
             num_layers=num_layers
         ).to(device)
+        
+        return model
     else:
         raise ValueError(f"Unsupported model name: {model_name}")
 
@@ -128,29 +137,41 @@ def plot_training_stats(training_stats, checkpoint_path, model_name='model'):
 
     print(f'Training curves saved at {checkpoint_path}')
 
-def determine_threshold(dataloader, model, device, percentile=95):
-    """
-    根据验证集的重构误差分布动态确定阈值
-    """
+def determine_threshold(dataloader, model, device, percentile=20):
     model.eval()
     recon_errors = []
-    labels = []
-
     with torch.no_grad():
-        for inputs, labels_batch in dataloader['val']:
+        for batch in dataloader:
+            # 确保输入数据格式正确
+            if isinstance(batch, (tuple, list)):
+                inputs = batch[0]
+            else:
+                inputs = batch
+            
+            # 确保输入是张量
+            if not isinstance(inputs, torch.Tensor):
+                continue
+                
             inputs = inputs.to(device)
+            
+            # 处理模型输出
             outputs = model(inputs)
+            
+            # 处理不同类型的模型输出
             if isinstance(outputs, tuple):
-                outputs = outputs[0]  # For VAE models
-            error = torch.mean((outputs - inputs) ** 2, dim=[1,2,3])
+                # VAE 模型输出 (outputs, mu, logvar)
+                outputs = outputs[0]  # 只取重构输出
+            
+            # 计算重构误差
+            error = F.mse_loss(outputs, inputs, reduction='none')
+            error = error.view(error.size(0), -1).mean(dim=1)
             recon_errors.extend(error.cpu().numpy())
-            labels.extend(labels_batch.numpy())
-
-    # 仅使用正常样本（标签为0）计算阈值
-    normal_errors = [e for e, l in zip(recon_errors, labels) if l == 0]
-    threshold = np.percentile(normal_errors, percentile)
-    print(f'根据验证集中正常样本确定的阈值（{percentile}百分位数）：{threshold}')
+    
+    # 使用给定的百分位数来确定阈值
+    threshold = np.percentile(recon_errors, percentile)
     return threshold
+
+
 
 def main(config_path='config/config.yaml'):
     # Load configuration
@@ -171,7 +192,7 @@ def main(config_path='config/config.yaml'):
 
     print(f'Using device: {device}')
 
-     # Load data
+    # Load data
     train_files, train_labels, val_files, val_labels = load_data(
         raw_data_path=config['data']['raw_data_path'],
         train_split=config['data']['train_split'],
@@ -209,6 +230,7 @@ def main(config_path='config/config.yaml'):
         supervised_config = config['method']['supervised']['model']
         # Initialize model
         model = get_model(supervised_config, device)
+        print(f"Model: {model}")
         # Define loss function and optimizer
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=supervised_config['learning_rate'],
@@ -225,7 +247,8 @@ def main(config_path='config/config.yaml'):
             num_epochs=supervised_config['num_epochs'],
             device=device,
             checkpoint_path=checkpoint_path,
-            save_every=config['training']['save_every']
+            save_every=config['training']['save_every'],
+            model_name=supervised_config['name']
         )
         # Evaluate model
         evaluation_results = evaluate_model(
@@ -263,16 +286,18 @@ def main(config_path='config/config.yaml'):
         checkpoint_path = config['training']['checkpoint_path']
         os.makedirs(checkpoint_path, exist_ok=True)
 
-        if unsupervised_method in ['dcae', 'cae']:
-            # Define loss function and optimizer
-            criterion = nn.MSELoss()
-            optimizer = torch.optim.Adam(model.parameters(), lr=method_config['learning_rate'],
-                                         weight_decay=method_config['weight_decay'])
-            # Train CAE model
-            trained_model, training_stats = train_autoencoder(
+        if unsupervised_method == 'dcvae':
+            # Define optimizer
+            optimizer = torch.optim.Adam(
+                model.parameters(), 
+                lr=method_config['learning_rate'],
+                weight_decay=method_config['weight_decay']
+            )
+            
+            # Train VAE model
+            trained_model, training_stats = train_variational_autoencoder(
                 model=model,
                 dataloaders=dataloaders,
-                criterion=criterion,
                 optimizer=optimizer,
                 num_epochs=method_config['num_epochs'],
                 device=device,
@@ -280,8 +305,58 @@ def main(config_path='config/config.yaml'):
                 save_every=config['training']['save_every']
             )
 
-            # 动态确定阈值（例如选择95百分位数）
-            dynamic_threshold = determine_threshold(dataloaders, trained_model, device, percentile=95)
+            # 修改这里：只传入训练集的数据加载器
+            dynamic_threshold = determine_threshold(
+                dataloaders['train'],  # 只传入训练集的数据加载器
+                trained_model, 
+                device, 
+                percentile=45
+            )
+            print(f'动态确定的阈值：{dynamic_threshold}')
+
+            # Use the new threshold for final evaluation
+            evaluation_results = evaluate_variational_autoencoder(
+                model=trained_model,
+                dataloader=val_loader,
+                device=device,
+                checkpoint_path=checkpoint_path,
+                num_images=10,
+                threshold=dynamic_threshold
+            )
+
+            # Save evaluation results
+            with open(os.path.join(checkpoint_path, f'{unsupervised_method}_evaluation_results.yaml'), 'w') as f:
+                yaml.dump(evaluation_results, f)
+            print(f'评估结果已保存到 {os.path.join(checkpoint_path, f"{unsupervised_method}_evaluation_results.yaml")}')
+
+            # Save final model
+            final_model_path = os.path.join(checkpoint_path, f'{unsupervised_method}_final.pth')
+            torch.save(trained_model.state_dict(), final_model_path)
+            print(f'Final model saved at {final_model_path}')
+
+            # Plot training and validation metrics
+            plot_training_stats(training_stats, checkpoint_path, model_name=unsupervised_method)
+
+        
+        elif unsupervised_method == 'dcae':
+            # 定义损失函数和优化器
+            criterion = nn.MSELoss()
+            optimizer = torch.optim.Adam(model.parameters(), lr=method_config['learning_rate'],
+                                        weight_decay=method_config['weight_decay'])
+            
+            # 训练自编码器模型
+            trained_model, training_stats = train_autoencoder(
+                model=model,
+                dataloaders=dataloaders,
+                optimizer=optimizer,
+                num_epochs=method_config['num_epochs'],
+                device=device,
+                checkpoint_path=checkpoint_path,
+                save_every=config['training']['save_every']
+            )
+
+            # 动态确定阈值
+            dynamic_threshold = determine_threshold(dataloaders['train'], trained_model, device, percentile=45)
             print(f'动态确定的阈值：{dynamic_threshold}')
 
             # 使用新的阈值进行最终评估
@@ -299,50 +374,7 @@ def main(config_path='config/config.yaml'):
                 yaml.dump(evaluation_results, f)
             print(f'评估结果已保存到 {os.path.join(checkpoint_path, "evaluation_results.yaml")}')
 
-            # Save final model
-            final_model_path = os.path.join(checkpoint_path, f'{unsupervised_method}_final.pth')
-            torch.save(trained_model.state_dict(), final_model_path)
-            print(f'Final model saved at {final_model_path}')
-
-            # 绘制训练和验证指标变化曲线
-            plot_training_stats(training_stats, checkpoint_path, model_name=unsupervised_method)
-
-        elif unsupervised_method in ['dcae', 'cae']:
-            # Define loss function and optimizer
-            criterion = nn.MSELoss()
-            optimizer = torch.optim.Adam(model.parameters(), lr=method_config['learning_rate'],
-                                        weight_decay=method_config['weight_decay'])
-            # Train CAE model
-            trained_model, training_stats = train_autoencoder(
-                model=model,
-                dataloaders=dataloaders,
-                criterion=criterion,
-                optimizer=optimizer,
-                num_epochs=method_config['num_epochs'],
-                device=device,
-                checkpoint_path=checkpoint_path,
-                save_every=config['training']['save_every']
-            )
-
-            dynamic_threshold = determine_threshold(dataloaders, trained_model, device, percentile=45)
-            print(f'动态确定的阈值：{dynamic_threshold}')
-
-            # 使用新的阈值进行最终评估
-            evaluation_results = evaluate_variational_autoencoder(
-                model=trained_model,
-                dataloader=val_loader,
-                device=device,
-                checkpoint_path=checkpoint_path,
-                num_images=10,
-                threshold=dynamic_threshold
-            )
-
-            # 保存评估结果
-            with open(os.path.join(checkpoint_path, 'evaluation_results.yaml'), 'w') as f:
-                yaml.dump(evaluation_results, f)
-            print(f'评估结果已保存到 {os.path.join(checkpoint_path, "evaluation_results.yaml")}')
-
-            # Save final model
+            # 保存最终模型
             final_model_path = os.path.join(checkpoint_path, f'{unsupervised_method}_final.pth')
             torch.save(trained_model.state_dict(), final_model_path)
             print(f'Final model saved at {final_model_path}')
@@ -359,10 +391,14 @@ def main(config_path='config/config.yaml'):
             checkpoint_path = config['training']['checkpoint_path']
             os.makedirs(checkpoint_path, exist_ok=True)
             # Train ViT-Anomaly model
+            # Define loss and optimizer
+            criterion = nn.CrossEntropyLoss()
+            optimizer = optim.Adam(model.parameters(), lr=1e-4)
+
+            # Train the model
             trained_model, training_stats = train_vit_anomaly(
                 model=model,
                 dataloaders=dataloaders,
-                criterion=criterion,
                 optimizer=optimizer,
                 num_epochs=method_config['num_epochs'],
                 device=device,

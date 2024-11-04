@@ -1,0 +1,38 @@
+accuracy: !!python/object/apply:numpy.core.multiarray.scalar
+- &id001 !!python/object/apply:numpy.dtype
+  args:
+  - f8
+  - false
+  - true
+  state: !!python/tuple
+  - 3
+  - <
+  - null
+  - null
+  - null
+  - -1
+  - -1
+  - 0
+- !!binary |
+  FnhlgVcW7j8=
+confusion_matrix:
+- - 3993
+  - 7
+- - 256
+  - 144
+f1_score: !!python/object/apply:numpy.core.multiarray.scalar
+- *id001
+- !!binary |
+  CJAmC9i54D8=
+precision: !!python/object/apply:numpy.core.multiarray.scalar
+- *id001
+- !!binary |
+  9BB6CD2E7j8=
+recall: !!python/object/apply:numpy.core.multiarray.scalar
+- *id001
+- !!binary |
+  CtejcD0K1z8=
+roc_auc: !!python/object/apply:numpy.core.multiarray.scalar
+- *id001
+- !!binary |
+  DNejcD2a7z8=

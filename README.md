@@ -1,23 +1,12 @@
-# Concrete Crack Image Classification
+# Deep Learning Visual Analysis with LLM Integration
 
 [![python](https://img.shields.io/badge/-Python_3.7_%7C_3.8_%7C_3.9_%7C_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pytorch](https://img.shields.io/badge/PyTorch_1.9+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
 [![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/ashleve/lightning-hydra-template#license)
 
-This project focuses on the **automatic classification of concrete crack images**, an essential task in structural health monitoring of infrastructure. By accurately identifying cracks in concrete structures, we can facilitate timely maintenance and prevent potential failures.
+This project focuses on the **Deep Learning Visual Analysis with LLM Integration**, aiming to develop a general framework that integrates traditional deep learning models with Large Language Models (LLMs) to enhance image understanding and visualization. By transforming complex visual tasks into efficient classification problems, we strive to create a system that not only automates detection processes but also provides interpretable and interactive insights through natural language.
 
-We implement and compare several advanced deep learning models, including:
-
-- **ResNet50**
-- **AlexNet**
-- **VGG16**
-- **Vision Transformer (ViT)**
-- **EfficientNet**
-- **Deep Convolutional Autoencoder (DCAE)**
-- **Deep Convolutional Variational Autoencoder (DCVAE)**
-- **Anomaly Detection using Vision Transformers**
-
-All models are trained and evaluated on the "Concrete Crack Images for Classification" dataset to solve this binary classification problem.
+please see project website to learn more: [https://cs5242-demo.silan.tech](https://cs5242-demo.silan.tech)
 
 ## Table of Contents
 
@@ -25,36 +14,38 @@ All models are trained and evaluated on the "Concrete Crack Images for Classific
 - [Code Structure](#code-structure)
 - [Project Setup](#project-setup)
 - [Dataset](#dataset)
+- [Intelligent Segmentation Strategy](#intelligent-segmentation-strategy)
 - [Models Implemented](#models-implemented)
-  - [ResNet50](#resnet50)
-  - [AlexNet](#alexnet)
-  - [VGG16](#vgg16)
-  - [Vision Transformer (ViT)](#vision-transformer-vit)
-  - [EfficientNet](#efficientnet)
-  - [Deep Convolutional Autoencoder (DCAE)](#deep-convolutional-autoencoder-dcae)
-  - [Deep Convolutional Variational Autoencoder (DCVAE)](#deep-convolutional-variational-autoencoder-dcvae)
-  - [Anomaly Detection using Vision Transformers](#anomaly-detection-using-vision-transformers)
+  - [Supervised Learning](#supervised-learning)
+    - [ResNet50](#resnet50)
+    - [AlexNet](#alexnet)
+    - [Vision Transformer (ViT)](#vision-transformer-vit)
+  - [Unsupervised Learning](#unsupervised-learning)
+    - [Deep Convolutional Autoencoder (DCAE)](#deep-convolutional-autoencoder-dcae)
+    - [Deep Convolutional Variational Autoencoder (DCVAE)](#deep-convolutional-variational-autoencoder-dcvae)
+    - [Anomaly Detection using Vision Transformers](#anomaly-detection-using-vision-transformers)
 - [Experimentation and Results](#experimentation-and-results)
+- [LLM Integration](#llm-integration)
 - [Usage](#usage)
   - [Training](#training)
   - [Evaluation](#evaluation)
   - [Configuration](#configuration)
+- [Limitations](#limitations)
 - [Acknowledgements](#acknowledgements)
-- [Contributors](#contributors)
 - [License](#license)
 
 ## Project Motivation
 
-Crack detection in concrete structures is vital for ensuring the safety and longevity of infrastructure. Traditional manual inspection methods are time-consuming and prone to human error. Automating this process using deep learning can significantly enhance inspection efficiency and accuracy.
+In various professional fields such as structural health monitoring, industrial inspection, and medical imaging, accurate and efficient detection of anomalies is crucial. Traditional manual inspection methods are often time-consuming and susceptible to human error. This project aims to bridge the gap by developing a **Deep Learning Visual Analysis** framework that integrates traditional deep learning models with Large Language Models (LLMs). This integration seeks to enhance not only the detection accuracy but also the interpretability and interactivity of the analysis process.
 
-In this project, we aim to:
+### Key Objectives:
 
-- **Explore a variety of deep learning models** for image classification, ranging from classical CNN architectures to modern transformer-based models.
-- **Evaluate and compare the performance** of these models on the concrete crack detection task.
-- **Implement both supervised and unsupervised learning approaches**, including anomaly detection methods.
-- **Reflect on the strengths and weaknesses** of each model to provide insights into their practical applicability.
+- **Develop a General Framework**: Create a system that seamlessly integrates supervised and unsupervised deep learning models with LLMs to handle diverse visual tasks.
+- **Innovative Segmentation Strategy**: Implement an intelligent image segmentation approach that transforms complex visual tasks into manageable classification problems.
+- **Enhance Interpretability**: Utilize LLMs to provide natural language descriptions and insights based on the visual analysis results, making the system more user-friendly and informative.
+- **Demonstrate Practical Application**: Apply the framework to concrete crack detection as a case study, showcasing its versatility and practical utility beyond basic academic exercises.
 
-This comprehensive exploration not only deepens our understanding of deep learning techniques but also contributes to practical solutions in the field of structural engineering.
+This project not only deepens our understanding of integrating different AI technologies but also contributes practical solutions to real-world problems in visual analysis and human-machine interaction.
 
 ## Code Structure
 
@@ -62,19 +53,21 @@ This comprehensive exploration not only deepens our understanding of deep learni
 - **Model Definitions**:
   - `src/models/resnet_model.py`
   - `src/models/alexnet_model.py`
-  - `src/models/vgg_model.py`
   - `src/models/vit_model.py`
-  - `src/models/efficientnet_model.py`
   - `src/models/autoencoder.py` (DCAE)
   - `src/models/variational_autoencoder.py` (DCVAE)
+  - `src/models/vit_anomaly.py` (ViT Anomaly Detection)
 - **Training Logic**:
   - `src/training/trainer.py`
   - `src/training/autoencoder_trainer.py`
   - `src/training/variational_autoencoder_trainer.py`
+  - `src/training/vit_anomaly_trainer.py`
 - **Evaluation Code**:
   - `src/evaluation/evaluator.py`
   - `src/evaluation/autoencoder_evaluator.py`
   - `src/evaluation/variational_autoencoder_evaluator.py`
+  - `src/evaluation/vit_anomaly_evaluator.py`
+- **LLM Integration**: `src/llm/agent.py`
 - **Main Script**: `main.py`
 - **Configuration Files**: `config/config.yaml`, various files under `configs/`
 
@@ -84,12 +77,12 @@ Follow these steps to set up the project environment:
 
 ```bash
 # Clone the repository
-git clone https://github.com/Qingbolan/cs5242-for-Concrete-Crack.git
-cd cs5242-for-Concrete-Crack
+git clone https://github.com/Qingbolan/deep-learning-visual-analysis.git
+cd deep-learning-visual-analysis
 
 # Create a virtual environment
-conda create -n concrete_crack python=3.9
-conda activate concrete_crack
+conda create -n visual_analysis python=3.9
+conda activate visual_analysis
 
 # Install PyTorch according to your system specifications
 # Visit https://pytorch.org/get-started/locally/ for installation commands
@@ -101,11 +94,11 @@ pip install -r requirements.txt
 mkdir outputs
 ```
 
-Make sure you have met the prerequisites for [PyTorch](https://pytorch.org/) and installed the corresponding version compatible with your CUDA or CPU setup.
+Ensure that you have the prerequisites for [PyTorch](https://pytorch.org/) installed, compatible with your CUDA or CPU setup.
 
 ## Dataset
 
-Please download the dataset from [Concrete Crack Images for Classification](https://data.mendeley.com/datasets/5y9wdsg2zt/2) and place the images in the `data/raw/` directory following this structure:
+For demonstration, we utilize the **Concrete Crack Images for Classification** dataset to validate our Deep Learning Visual Analysis framework. Please download the dataset from [Concrete Crack Images for Classification](https://data.mendeley.com/datasets/5y9wdsg2zt/2) and organize the images in the `data/raw/` directory as follows:
 
 ```
 data/
@@ -117,45 +110,102 @@ data/
 - **Negative**: Images without cracks.
 - **Positive**: Images with cracks.
 
+*Note*: The framework is designed to accommodate various datasets, enabling its application to diverse visual tasks beyond crack detection.
+
+## Intelligent Segmentation Strategy
+
+### Innovative Image Segmentation: Transforming Complex Visual Tasks into Efficient Classification Problems
+
+Our **Intelligent Segmentation** strategy revolutionizes the approach to complex visual tasks by decomposing them into manageable classification units. This method enhances processing efficiency, accuracy, and scalability, making it suitable for a wide range of applications.
+
+#### Core Principles:
+
+1. **Image Partitioning**: Dividing high-resolution or complex images into smaller, uniform patches to simplify the classification process.
+2. **Local Feature Extraction**: Applying deep learning models to each patch to identify the presence or absence of specific features or anomalies.
+3. **Result Integration**: Aggregating patch-level classifications to form a comprehensive understanding of the entire image, enabling precise localization and analysis.
+
+#### Implementation Steps:
+
+1. **Image Segmentation**:
+
+   - **Grid-Based Partitioning**: Splitting the image into fixed-size patches (e.g., 16x16 pixels) to ensure uniformity.
+   - **Adaptive Segmentation**: Utilizing algorithms that adjust patch sizes based on image content for better feature representation.
+2. **Feature Extraction and Classification**:
+
+   - **Supervised Learning Models**: Employing architectures like ResNet50, AlexNet, and Vision Transformer (ViT) to classify each patch.
+   - **Unsupervised Learning Models**: Utilizing Autoencoder, Variational Autoencoder (VAE), and ViT-based anomaly detection to identify deviations from normal patterns.
+3. **Result Aggregation and Visualization**:
+
+   - **Matrix Mapping**: Creating a matrix that maps the classification results of each patch, highlighting areas of interest (e.g., cracks) with distinct markers.
+   - **LLM Integration**: Leveraging LLMs to interpret and describe the aggregated results, providing natural language summaries and insights.
+
+#### Advantages:
+
+- **Enhanced Efficiency**: Parallel processing of patches reduces computational load and accelerates overall analysis.
+- **Improved Accuracy**: Localized classification ensures detailed detection of subtle anomalies.
+- **Scalability**: The framework can easily scale to accommodate varying image sizes and multiple visual tasks.
+- **Flexibility**: Applicable to diverse domains such as structural health monitoring, industrial inspection, and medical imaging.
+
+#### Limitations and Mitigations:
+
+- **Edge Effects**: Potential loss of contextual information at patch boundaries, mitigated by overlapping segmentation and contextual fusion techniques.
+- **Global Context Loss**: Addressed by integrating global features through transformer-based models and post-processing methods.
+- **Resource Intensity**: Optimized through efficient model architectures and distributed computing strategies.
+- **Data Annotation**: Increased complexity in labeling patch-level data, especially for unsupervised tasks, addressed by leveraging automated or semi-automated annotation tools.
+
+Our Intelligent Segmentation strategy streamlines complex visual tasks, setting the foundation for integrating advanced analytical capabilities through LLMs, and paving the way for intelligent and interactive systems.
+
 ## Models Implemented
 
-### Supervised(3)
+### Supervised Learning
+
+We implemented and evaluated several traditional deep learning models to classify segmented image patches effectively.
 
 #### ResNet50
 
-ResNet50 introduces residual learning to ease the training of deep neural networks. It helps in avoiding vanishing gradient problems.
+ResNet50 introduces residual learning to facilitate the training of deep neural networks, effectively addressing the vanishing gradient problem.
 
-![ResNet Architecture][]
-![image-20241015193834961](./assets/image-20241015193834961.png)
+![ResNet Architecture](./assets/image-20241015193834961.png)
+
+**Key Features:**
+
+- **Deep Residual Blocks**: Allowing the training of deeper networks without degradation in performance.
+- **Batch Normalization**: Enhancing training stability and speed.
+- **Global Average Pooling**: Reducing model parameters and preventing overfitting.
 
 #### AlexNet
 
-AlexNet is one of the pioneering models in deep learning, known for its success in the ImageNet competition.
+AlexNet is a pioneering convolutional neural network known for its success in the ImageNet competition, demonstrating the potential of deep learning in image classification.
 
-![AlexNet Architecture][]
-![WhatsApp 图像2024-10-15于19.29.43_6d3c2c53](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-15%E4%BA%8E19.29.43_6d3c2c53.jpg)
+![AlexNet Architecture](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-15%E4%BA%8E19.29.43_6d3c2c53.jpg)
 
-### VGG16
+**Key Features:**
 
-VGG16 uses very small (3x3) convolution filters, which showed that the depth of the network is a critical component for good performance.
-
-![VGG16 Architecture][]
-
-![WhatsApp 图像2024-10-15于19.25.41_303f991c](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-15%E4%BA%8E19.25.41_303f991c.jpg)
+- **Deep Convolutional Layers**: Extracting hierarchical features from images.
+- **ReLU Activation**: Introducing non-linearity and accelerating training.
+- **Dropout Layers**: Mitigating overfitting by randomly dropping neurons during training.
 
 #### Vision Transformer (ViT)
 
-ViT applies the Transformer architecture directly to image recognition, with great success when pre-trained on large datasets.
+ViT applies the Transformer architecture directly to image recognition tasks, leveraging self-attention mechanisms to capture global dependencies within images.
 
-![Vision Transformer Architecture][]
+![Vision Transformer Architecture](./assets/image-20241015194113619.png)
 
-![image-20241015194113619](./assets/image-20241015194113619.png)
+**Key Features:**
 
-### Unsupervised(3)
+- **Patch Embedding**: Dividing images into patches and embedding them into a sequence.
+- **Self-Attention Mechanism**: Enabling the model to focus on relevant parts of the image.
+- **Transformer Blocks**: Facilitating the capture of complex feature relationships across the entire image.
+
+### Unsupervised Learning
+
+Our unsupervised models focus on learning intrinsic data representations and detecting anomalies without explicit labels.
 
 #### Deep Convolutional Autoencoder (DCAE)
 
-The Deep Convolutional Autoencoder (DCAE) is implemented with a symmetric encoder-decoder architecture designed specifically for concrete crack image processing. Our implementation follows a carefully designed structure:
+The DCAE employs a symmetric encoder-decoder architecture tailored for concrete crack image processing, focusing on dimensionality reduction and feature learning.
+
+![Deep Convolutional Autoencoder (DCAE)](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-22%E4%BA%8E12.05.39_17b2e6e8.jpg)
 
 **Architecture Details:**
 
@@ -176,12 +226,17 @@ The Deep Convolutional Autoencoder (DCAE) is implemented with a symmetric encode
   - ConvTranspose2D (1024→2048, kernel=3x3)
   - ConvTranspose2D (2048→3, kernel=3x3)
 
-![Deep Convolutional Autoencoder (DCAE)](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-22%E4%BA%8E12.05.39_17b2e6e8.jpg)
-*(Reference to (a) Convolutional Autoencoder in the diagram)*
+**Key Features:**
+
+- Maintains spatial information through convolutional operations.
+- Enables efficient dimensionality reduction.
+- Facilitates anomaly detection via reconstruction error.
 
 #### Deep Convolutional Variational Autoencoder (DCVAE)
 
-The Deep Convolutional Variational Autoencoder (DCVAE) extends the traditional autoencoder by introducing a probabilistic approach to the latent space encoding. Our implementation features:
+DCVAE extends the traditional autoencoder by introducing probabilistic encoding, enhancing the model's ability to generalize and detect anomalies.
+
+![Deep Convolutional Variational Autoencoder (DCVAE)](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-22%E4%BA%8E12.05.39_17b2e6e8-1729581873230-50.jpg)
 
 **Architecture Details:**
 
@@ -193,8 +248,7 @@ The Deep Convolutional Variational Autoencoder (DCVAE) extends the traditional a
   - Two parallel FC layers for μ and σ
 - **Latent Space:**
 
-  - Probabilistic sampling using the reparameterization trick
-  - Z ~ N(μ, σ²In)
+  - Probabilistic sampling using the reparameterization trick: Z ~ N(μ, σ²I)
   - FC layer (512*2*2→128) for both mean and variance
 - **Decoder:**
 
@@ -203,117 +257,40 @@ The Deep Convolutional Variational Autoencoder (DCVAE) extends the traditional a
   - ConvTranspose2D (1024→2048, kernel=3x3)
   - Final reconstruction layer
 
-Key Features:
+**Key Features:**
 
-- Stochastic latent representation
-- KL divergence regularization
-- Better generalization through variational inference
-
-![Deep Convolutional Variational Autoencoder (DCVAE)](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-22%E4%BA%8E12.05.39_17b2e6e8-1729581873230-50.jpg)
-*(Reference to (b) Convolutional Variational Autoencoder in the diagram)*
-
-Both architectures are designed to:
-
-- Maintain spatial information through convolutional operations
-- Provide efficient dimensionality reduction
-- Learn meaningful representations of concrete crack features
-- Enable anomaly detection through reconstruction error
+- Stochastic latent representation.
+- KL divergence regularization.
+- Enhanced generalization through variational inference.
 
 #### Anomaly Detection using Vision Transformers
 
-Our Vision Transformer (ViT) based anomaly detection system implements a specialized architecture designed specifically for concrete crack detection. The model consists of three main components as illustrated in the diagram:
-
-**1. Image Tokenization and Embedding:**
-
-- Input images are divided into fixed-size patches (shown as x1-x9 in the diagram)
-- Patches are arranged in a grid format (3x3 as shown)
-- Linear Embedding (E) projects each patch into a higher dimensional space
-- Special classification token (Vclass) is prepended to the sequence
-- Positional embeddings are added to retain spatial information
-
-**2. Transformer Encoder:**
-Each Transformer Encoder block contains:
-
-- Layer Normalization (LN)
-- Multi-Head Self Attention (MSA)
-  - Linear projections for Query (Q), Key (K), and Value (V)
-  - Scaled Dot-Product Attention mechanism
-  - h parallel attention heads
-  - Concatenation and linear projection of attention outputs
-- MLP block consisting of:
-  - Fully Connected Layer
-  - GeLU Activation
-  - Fully Connected Layer
-- Residual connections (+) around both MSA and MLP blocks
-
-**3. Classification Head:**
-
-- Final classification layer for anomaly detection
-- Uses the output corresponding to the classification token
-- Produces binary output (normal/anomaly)
-
-**Detailed Architecture:**
+Our ViT-based anomaly detection system leverages the self-attention mechanism of transformers to identify irregular patterns in images without explicit labels.
 
 ![Anomaly Detection using Vision Transformers](./assets/WhatsApp%20%E5%9B%BE%E5%83%8F2024-10-21%E4%BA%8E12.21.59_d38439ad.jpg)
 
-```
-Input Image
-└── Patch + Position Embeddings
-    ├── Image patches (x1...x9)
-    ├── Linear embedding
-    ├── Classification token (Vclass)
-    └── Positional encoding
-  
-Transformer Encoder
-└── Multiple blocks of:
-    ├── Layer Norm (LN)
-    ├── Multi-Head Self Attention (MSA)
-    │   ├── Q, K, V linear projections
-    │   ├── Scaled dot-product attention
-    │   └── Multi-head concatenation
-    ├── Residual connection
-    ├── Layer Norm (LN)
-    ├── MLP
-    │   ├── Fully Connected
-    │   ├── GeLU
-    │   └── Fully Connected
-    └── Residual connection
+**Architecture Components:**
 
-Classification Head
-└── Final classifier for anomaly detection
-```
+1. **Image Tokenization and Embedding:**
+
+   - Divides input images into fixed-size patches (e.g., 16x16 pixels).
+   - Projects each patch into a higher-dimensional space using linear embedding.
+   - Adds a special classification token and positional embeddings to retain spatial information.
+2. **Transformer Encoder:**
+
+   - Comprises multiple transformer blocks with layer normalization, multi-head self-attention, and MLP layers.
+   - Utilizes residual connections for stable gradient flow.
+3. **Classification Head:**
+
+   - Processes the output corresponding to the classification token.
+   - Produces a binary output indicating normal or anomaly.
 
 **Key Features:**
 
-1. **Patch-based Processing:**
-
-   - Divides input image into fixed-size patches
-   - Maintains spatial relationships through positional embeddings
-   - Enables parallel processing of image regions
-2. **Self-Attention Mechanism:**
-
-   - Captures global dependencies between patches
-   - Multiple attention heads for different feature aspects
-   - Scaled dot-product attention for stable training
-3. **MLP Block Design:**
-
-   - Two-layer feedforward network
-   - GeLU activation for non-linearity
-   - Residual connections for better gradient flow
-4. **Anomaly Detection Strategy:**
-
-   - Uses classification token's final representation
-   - Learns normal pattern characteristics
-   - Identifies deviations as potential anomalies
-
-This architecture is particularly effective for concrete crack detection because:
-
-- It can capture both local and global features
-- The attention mechanism helps focus on relevant image regions
-- The deep representation learning enables subtle anomaly detection
-- The patch-based approach is suitable for detecting crack patterns
-
-Implementation details and example usage can be found in `src/models/vit_anomaly.py` and `src/training/vit_anomaly_trainer.py`.
+- **Patch-Based Processing**: Maintains spatial relationships and enables parallel processing.
+- **Self-Attention Mechanism**: Captures global dependencies and focuses on relevant image regions.
+- **MLP Block Design**: Incorporates non-linearity and ensures robust feature learning.
+- **Anomaly Detection Strategy**: Identifies deviations from learned normal patterns without explicit labels.
 
 **Usage Example:**
 
@@ -325,23 +302,20 @@ model = ViTAnomalyDetector(
     embed_dim=768,         # Embedding dimension
     num_heads=12,          # Number of attention heads
     num_layers=12,         # Number of transformer blocks
-    mlp_ratio=4,          # MLP hidden dimension ratio
+    mlp_ratio=4,           # MLP hidden dimension ratio
     num_classes=2          # Binary classification
 )
 
 # Anomaly detection
 anomaly_scores = model.get_anomaly_score(images)
 predictions = anomaly_scores > threshold
-
 ```
-
-![image-20241022164508392](./assets/image-20241022164508392.png)
 
 ## Experimentation and Results
 
-We conducted extensive experiments with the aforementioned models to evaluate their performance in the task of concrete crack detection.
+We conducted extensive experiments to evaluate the performance of our implemented models within the Deep Learning Visual Analysis framework.
 
-**Performance Metrics**:
+### Performance Metrics
 
 - **Accuracy**
 - **Precision**
@@ -349,22 +323,43 @@ We conducted extensive experiments with the aforementioned models to evaluate th
 - **F1 Score**
 - **Confusion Matrix**
 
-**Experimental Findings**:
+### Experimental Findings
 
-1. **ResNet50** achieved high accuracy due to its deep architecture and residual connections, which help in learning complex features.
-2. **AlexNet**, despite being one of the earlier models, performed reasonably well but was outperformed by deeper networks.
-3. **VGG16** showed strong performance thanks to its depth, but at the cost of increased computational resources.
-4. **Vision Transformer (ViT)** demonstrated that transformer architectures can be effectively applied to image classification tasks, achieving competitive performance.
-5. **EfficientNet** provided an excellent balance between accuracy and computational efficiency due to its scalable architecture.
-6. **DCAE and DCVAE** were used for feature extraction and anomaly detection. While not directly classifying images, they helped in understanding the underlying data representation.
-7. **Anomaly Detection using ViT** highlighted the model's capacity to detect anomalies without explicit labels, which is valuable in scenarios with limited annotated data.
+1. **ResNet50** achieved high accuracy due to its deep architecture and residual connections, effectively learning complex features.
+2. **AlexNet** demonstrated reasonable performance but was outperformed by deeper networks like ResNet50 and ViT.
+3. **Vision Transformer (ViT)** showcased the potential of transformer architectures in image classification, achieving competitive results with superior global feature capture.
+4. **Deep Convolutional Autoencoder (DCAE)** and **Deep Convolutional Variational Autoencoder (DCVAE)** provided valuable insights through feature extraction and anomaly detection, aiding in understanding underlying data representations.
+5. **Anomaly Detection using ViT** proved effective in identifying irregular patterns without explicit labels, highlighting its utility in scenarios with limited annotated data.
+6. **Intelligent Segmentation** strategy enhanced overall detection accuracy by enabling detailed local analysis and efficient processing.
 
-**Observations**:
+### Observations
 
-- **Data Augmentation**: Implementing data augmentation techniques improved model generalization.
-- **Hyperparameter Tuning**: Careful tuning of learning rates, batch sizes, and optimizers was crucial for model convergence.
-- **Computational Resources**: Transformer-based models required more computational power, highlighting the need for efficient training strategies.
-- **Unsupervised Learning**: Including unsupervised methods like autoencoders provided additional insights into the data and potential for anomaly detection.
+- **Data Augmentation**: Implementing techniques such as rotation, scaling, and flipping improved model generalization.
+- **Hyperparameter Tuning**: Optimizing learning rates, batch sizes, and model-specific parameters was crucial for achieving optimal performance.
+- **Computational Resources**: Transformer-based models required significant computational power, necessitating efficient training strategies and resource management.
+- **Unsupervised Learning**: Incorporating unsupervised methods provided additional layers of analysis, enabling the detection of anomalies beyond supervised capabilities.
+
+## LLM Integration
+
+To elevate the analytical capabilities of our system, we integrated Large Language Models (LLMs) to interpret and interact with the visual data classifications intelligently.
+
+### Features:
+
+- **Automated Reporting**: LLMs generate comprehensive reports based on classification results, summarizing key findings and insights.
+- **Interactive Queries**: Users can interact with the system using natural language queries, receiving detailed explanations and analyses.
+- **Contextual Understanding**: LLMs enhance the system's ability to understand contextual relationships within the data, providing more meaningful interpretations.
+
+### Implementation:
+
+- **Agent System**: Developed an agent that serves as an intermediary between the visual classification module and the LLM, facilitating seamless communication and data exchange.
+- **Task Automation**: Enabled the LLM to perform tasks such as counting detected anomalies, marking their locations, and providing trend analyses.
+- **User Interface**: Designed a natural language interface allowing users to interact with the system effortlessly, enhancing usability and accessibility.
+
+### Benefits:
+
+- **Enhanced Interpretability**: Transforms raw classification data into understandable and actionable insights.
+- **Improved User Experience**: Facilitates intuitive interactions, making the system accessible to users without technical expertise.
+- **Scalable Intelligence**: Allows the system to adapt and respond to a wide range of queries and analytical needs dynamically.
 
 ## Usage
 
@@ -372,7 +367,7 @@ We conducted extensive experiments with the aforementioned models to evaluate th
 
 To train a model, modify the `config/config.yaml` file to set the desired model and parameters.
 
-Example: To train with ResNet50:
+**Example: To train with ResNet50:**
 
 ```yaml
 model:
@@ -400,40 +395,46 @@ python main.py --evaluate --ckpt_path path/to/checkpoint.pth
 
 All configurations are managed through YAML files for clarity and flexibility. Parameters can also be overridden via command-line arguments.
 
-Example:
+**Example:**
 
 ```bash
 python main.py model.name=efficientnet model.pretrained=False
 ```
 
+## Limitations
+
+While our framework provides a structured approach to integrating deep learning models with LLMs for visual analysis, it is not without limitations:
+
+1. **Edge Effects**: Splitting images into patches can result in loss of contextual information at the boundaries. Although overlapping segmentation can mitigate this, it adds computational overhead.
+2. **Global Context Loss**: The patch-based approach may fail to capture the overall structure and global dependencies within an image, potentially affecting detection accuracy in complex scenarios.
+3. **Resource Intensity**: Processing large numbers of patches, especially with transformer-based models, requires substantial computational resources, which may not be feasible for all applications.
+4. **Data Annotation Complexity**: Annotating data at the patch level increases the labeling effort, particularly for unsupervised tasks where anomaly labels are not readily available.
+5. **Integration Complexity**: Combining deep learning models with LLMs introduces additional layers of complexity in system design and requires careful coordination to ensure seamless interaction and data flow.
+
+Future work will focus on addressing these limitations by exploring more advanced segmentation techniques, optimizing computational efficiency, and enhancing the integration mechanisms between deep learning models and LLMs.
+
 ## Acknowledgements
 
-We are grateful to the providers of the [Concrete Crack Images for Classification](https://data.mendeley.com/datasets/5y9wdsg2zt/2) dataset.
+We extend our gratitude to the providers of the [Concrete Crack Images for Classification](https://data.mendeley.com/datasets/5y9wdsg2zt/2) dataset.
 
-**Citations**:
+**Citations:**
 
 - Özgenel, Ç.F., & Gönenç Sorguç, A. (2018). *Performance Comparison of Pretrained Convolutional Neural Networks on Crack Detection in Buildings*. ISARC 2018, Berlin.
-- Zhang, L., Yang, F., Zhang, Y. D., & Zhu, Y. J. (2016). *Road Crack Detection Using Deep Convolutional Neural Network*. IEEE International Conference on Image Processing (ICIP). http://doi.org/10.1109/ICIP.2016.7533052
+- Zhang, L., Yang, F., Zhang, Y. D., & Zhu, Y. J. (2016). *Road Crack Detection Using Deep Convolutional Neural Network*. IEEE International Conference on Image Processing (ICIP). [doi:10.1109/ICIP.2016.7533052](http://doi.org/10.1109/ICIP.2016.7533052)
 
-## Contributors
-
-- **HU SILAN** ([Qingbolan](https://github.com/Qingbolan)) - Project Lead, Model Implementation, Experimentation
-- **Tan Kah Xuan** - Data Preparation, Model Training, Evaluation
-
-We would also like to acknowledge the open-source community for providing invaluable resources and inspiration for this project.
-
-## License
+## License&&author
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-*Note*: This project is part of an academic exploration into deep learning techniques for image classification. The implementations and findings reflect extensive work and critical thinking in applying state-of-the-art models to a practical problem. We have extensively compared different architectures, implemented both supervised and unsupervised learning methods, and provided thorough documentation to aid in understanding and reproducibility.
+
+*Note*: This project represents an attempt to develop a general framework integrating traditional deep learning techniques with Large Language Models (LLMs) for enhanced visual analysis. The implementations and findings reflect thoughtful application and critical thinking in applying established models to practical, real-world problems. We have meticulously compared different architectures, implemented both supervised and unsupervised learning methods, and provided comprehensive documentation to ensure understanding and reproducibility.
 
 Feel free to explore the codebase, run experiments, and contribute to the project!
 
-**Project GitHub Link**: [https://github.com/Qingbolan/cs5242-for-Concrete-Crack](https://github.com/Qingbolan/cs5242-for-Concrete-Crack)
+**Project GitHub Link**: [https://github.com/Qingbolan/Vision-LLM-Integration](https://github.com/Qingbolan/Vision-LLM-Integration)
 
 <table>
   <tr>
-    <td align="center"><a href="https://github.com/Qingbolan"><img src="https://github.com/Qingbolan.png" width="100px;" alt=""/><br /><sub><b>HU SILAN</b></sub></a><br /><a href="https://github.com/Qingbolan/cs5242-for-Concrete-Crack" title="Code">💻</a></td>
-    <td align="center"><a href="#"><img src="https://via.placeholder.com/100" width="100px;" alt=""/><br /><sub><b>Tan Kah Xuan</b></sub></a><br /><a href="https://github.com/Qingbolan/cs5242-for-Concrete-Crack" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/Qingbolan"><img src="https://github.com/Qingbolan.png" width="100px;" alt=""/><br /><sub><b>HU SILAN</b></sub></a><br /><a href="https://github.com/Qingbolan/deep-learning-visual-analysis" title="Code">💻</a></td>
+    <td align="center"><a href="#"><img src="https://via.placeholder.com/100" width="100px;" alt=""/><br /><sub><b>Tan Kah Xuan</b></sub></a><br /><a href="https://github.com/Qingbolan/deep-learning-visual-analysis" title="Code">💻</a></td>
   </tr>
 </table>

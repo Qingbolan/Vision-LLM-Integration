@@ -1,0 +1,4 @@
+2024-10-31 03:20:09,202 - INFO - Epoch 1/1
+2024-10-31 03:20:09,202 - INFO - ----------
+2024-10-31 03:21:28,454 - INFO - train Loss: 81032.7472
+2024-10-31 03:21:39,172 - ERROR - Training failed: 'list' object has no attribute 'to'

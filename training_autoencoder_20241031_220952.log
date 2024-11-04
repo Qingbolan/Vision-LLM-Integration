@@ -1,0 +1,3 @@
+2024-10-31 22:09:52,941 - INFO - Epoch 1/10
+2024-10-31 22:09:52,941 - INFO - ----------
+2024-10-31 22:10:04,898 - ERROR - Training failed: 'tuple' object has no attribute 'size'

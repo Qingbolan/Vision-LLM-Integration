@@ -1,0 +1,10 @@
+2024-11-03 20:44:02,077 - INFO - Epoch 1/1
+2024-11-03 20:44:02,078 - INFO - ----------
+2024-11-03 20:44:15,339 - ERROR - Error in batch processing: Labels are required for classification loss.
+2024-11-03 20:44:19,144 - ERROR - Error in batch processing: Labels are required for classification loss.
+2024-11-03 20:44:19,208 - ERROR - Error in batch processing: Labels are required for classification loss.
+2024-11-03 20:44:19,362 - ERROR - Error in batch processing: Labels are required for classification loss.
+2024-11-03 20:44:23,004 - ERROR - Error in batch processing: Labels are required for classification loss.
+2024-11-03 20:44:23,244 - ERROR - Error in batch processing: Labels are required for classification loss.
+2024-11-03 20:44:26,560 - ERROR - Error in batch processing: Labels are required for classification loss.
+2024-11-03 20:44:26,791 - ERROR - Error in batch processing: Labels are required for classification loss.

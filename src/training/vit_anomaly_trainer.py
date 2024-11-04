@@ -1,74 +1,136 @@
-import os
 import torch
-from torch import optim
 from tqdm import tqdm
+import os
+import logging
+from datetime import datetime
+import torch.nn.functional as F
 
-def train_vit_anomaly(model, dataloaders, criterion, optimizer, num_epochs, device, checkpoint_path=None, save_every=5):
-    best_acc = 0.0
-    best_model_wts = model.state_dict()
+def train_vit_anomaly(
+    model,
+    dataloaders,
+    optimizer,
+    num_epochs,
+    device,
+    checkpoint_path=None,
+    save_every=5
+):
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(f'training_vit_anomaly_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
+            logging.StreamHandler()
+        ]
+    )
+    
+    try:
+        best_loss = float('inf')
+        best_model_wts = model.state_dict()
+        training_stats = {
+            'train_losses': [],
+            'val_losses': [],
+            'best_epoch': 0
+        }
 
-    # 添加学习率调度器
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+        model = model.to(device)
+        
+        for epoch in range(1, num_epochs + 1):
+            logging.info(f'Epoch {epoch}/{num_epochs}')
+            logging.info('-' * 10)
 
-    for epoch in range(1, num_epochs + 1):
-        print(f'Epoch {epoch}/{num_epochs}')
-        print('-' * 10)
+            for phase in ['train', 'val']:
+                if phase == 'train':
+                    model.train()
+                else:
+                    model.eval()
 
-        # 每个epoch包含训练和验证阶段
-        for phase in ['train', 'val']:
-            if phase == 'train':
-                model.train()  # 设置模型为训练模式
-            else:
-                model.eval()   # 设置模型为评估模式
+                running_loss = 0.0
+                batch_count = 0
 
-            running_loss = 0.0
-            running_corrects = 0
+                with tqdm(dataloaders[phase], desc=f'{phase}') as pbar:
+                    for data in pbar:
+                        try:
+                            inputs = data[0] if isinstance(data, (tuple, list)) else data
+                            inputs = inputs.to(device)
 
-            # 遍历数据
-            for inputs, labels in tqdm(dataloaders[phase], desc=f'{phase}'):
-                inputs = inputs.to(device)
-                labels = labels.to(device)
+                            optimizer.zero_grad()
 
-                # 清零梯度
-                optimizer.zero_grad()
+                            with torch.set_grad_enabled(phase == 'train'):
+                                z, reconstructed = model(inputs)
+                                
+                                # 计算重构损失
+                                loss = F.mse_loss(reconstructed, model.vit(inputs), reduction='mean') + 0.1 * torch.mean(torch.norm(z, p=2, dim=1))
 
-                # 前向传播
-                with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs)
-                    _, preds = torch.max(outputs, 1)
-                    loss = criterion(outputs, labels)
+                                if phase == 'train':
+                                    loss.backward()
+                                    # 梯度裁剪（防止梯度爆炸）
+                                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                                    optimizer.step()
 
-                    # 仅在训练阶段反向传播和优化
-                    if phase == 'train':
-                        loss.backward()
-                        optimizer.step()
+                            batch_size = inputs.size(0)
+                            running_loss += loss.item() * batch_size
+                            batch_count += batch_size
 
-                # 统计损失和正确预测数
-                running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data)
+                            # 更新进度条
+                            avg_loss = running_loss / batch_count
+                            pbar.set_postfix({
+                                'loss': f'{loss.item():.4f}',
+                                'avg_loss': f'{avg_loss:.4f}'
+                            })
 
-            if phase == 'train':
-                scheduler.step()
+                        except Exception as e:
+                            logging.error(f"Error in batch processing: {str(e)}")
+                            continue
 
-            epoch_loss = running_loss / len(dataloaders[phase].dataset)
-            epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
+                    epoch_loss = running_loss / len(dataloaders[phase].dataset)
+                    
+                    logging.info(f'{phase} Loss: {epoch_loss:.4f}')
 
-            print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
+                if phase == 'val':
+                    # 保存验证损失
+                    training_stats['val_losses'].append(epoch_loss)
+                else:
+                    # 保存训练损失
+                    training_stats['train_losses'].append(epoch_loss)
 
-            # 深拷贝最佳模型
-            if phase == 'val' and epoch_acc > best_acc:
-                best_acc = epoch_acc
-                best_model_wts = model.state_dict()
+                # 保存最佳模型
+                if phase == 'val' and epoch_loss < best_loss:
+                    best_loss = epoch_loss
+                    best_model_wts = model.state_dict().copy()
+                    training_stats['best_epoch'] = epoch
+                    
+                    # 保存最佳模型
+                    if checkpoint_path:
+                        best_model_path = os.path.join(checkpoint_path, 'best_vit_anomaly.pth')
+                        torch.save({
+                            'epoch': epoch,
+                            'model_state_dict': best_model_wts,
+                            'optimizer_state_dict': optimizer.state_dict(),
+                            'loss': best_loss,
+                        }, best_model_path)
+                        logging.info(f'Best model saved at epoch {epoch}')
 
-        # 保存检查点
-        if checkpoint_path and epoch % save_every == 0:
-            model_filename = f'vit_anomaly_epoch_{epoch}.pth'
-            torch.save(model.state_dict(), os.path.join(checkpoint_path, model_filename))
-            print(f'Checkpoint saved at epoch {epoch}')
+            # 定期保存检查点
+            if checkpoint_path and epoch % save_every == 0:
+                checkpoint_file = os.path.join(checkpoint_path, f'checkpoint_epoch_{epoch}.pth')
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'train_loss': training_stats['train_losses'][-1],
+                    'val_loss': training_stats['val_losses'][-1],
+                    'training_stats': training_stats
+                }, checkpoint_file)
+                logging.info(f'Checkpoint saved at epoch {epoch}')
 
-    print('Training complete')
-    print(f'Best val Acc: {best_acc:.4f}')
+        logging.info('Training completed')
+        logging.info(f'Best val Loss: {best_loss:.4f} at epoch {training_stats["best_epoch"]}')
 
-    # 加载最佳模型权重
-    model.load_state_dict(best_model_wts)
-    return model
+        # 加载最佳模型权重
+        model.load_state_dict(best_model_wts)
+        
+        return model, training_stats
+
+    except Exception as e:
+        logging.error(f"Training failed: {str(e)}")
+        raise

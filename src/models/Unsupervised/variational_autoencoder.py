@@ -34,7 +34,7 @@ class ConvolutionalVariationalAutoencoder(nn.Module):
             nn.ConvTranspose2d(128, 64, 4, stride=2, padding=1),  # Output: (64, H/2, W/2)
             nn.ReLU(True),
             nn.ConvTranspose2d(64, 3, 4, stride=2, padding=1),    # Output: (3, H, W)
-            nn.Sigmoid(),
+            nn.ReLU(True),
         )
         
     def reparameterize(self, mu, logvar):

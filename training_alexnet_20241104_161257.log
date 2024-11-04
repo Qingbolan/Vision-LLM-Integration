@@ -1,0 +1,8 @@
+2024-11-04 16:12:57,848 - INFO - Epoch 1/1
+2024-11-04 16:12:57,849 - INFO - ----------
+2024-11-04 16:13:59,430 - INFO - train Loss: 0.0701
+2024-11-04 16:14:14,090 - INFO - val Loss: 0.0118
+2024-11-04 16:14:14,742 - INFO - Best model saved at epoch 1
+2024-11-04 16:14:14,742 - INFO - Training completed
+2024-11-04 16:14:14,742 - INFO - Best val Loss: 0.0118 at epoch 1
+2024-11-04 16:14:14,948 - INFO - Loss plot saved at ./checkpoints/alexnet_loss_per_epoch.png

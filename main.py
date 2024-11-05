@@ -17,10 +17,10 @@ from src.models import (
     get_autoencoder_model,
     get_variational_autoencoder_model,
 )
-from src.training.trainer import train_model
-from src.training.autoencoder_trainer import train_autoencoder
-from src.training.variational_autoencoder_trainer import train_variational_autoencoder
-from src.training.vit_anomaly_trainer import train_vit_anomaly
+from src.training.supervised_trainer import train_supervised_model
+from src.training.unsupervised_autoencoder_trainer import train_autoencoder
+from src.training.unsupervised_variational_autoencoder_trainer import train_variational_autoencoder
+from src.training.unsupervised_vit_anomaly_trainer import train_vit_anomaly
 
 from src.evaluation.evaluator import evaluate_model
 from src.evaluation.autoencoder_evaluator import evaluate_autoencoder
@@ -239,7 +239,7 @@ def main(config_path='config/config.yaml'):
         checkpoint_path = config['training']['checkpoint_path']
         os.makedirs(checkpoint_path, exist_ok=True)
         # Train model
-        trained_model, training_stats = train_model(
+        trained_model, training_stats = train_supervised_model(
             model=model,
             dataloaders=dataloaders,
             criterion=criterion,
@@ -406,7 +406,7 @@ def main(config_path='config/config.yaml'):
                 save_every=config['training']['save_every']
             )
             # 动态确定阈值（例如选择95百分位数）
-            dynamic_threshold = determine_threshold(dataloaders, trained_model, device, percentile=95)
+            dynamic_threshold = determine_threshold(dataloaders['train'], trained_model, device, percentile=45)
             print(f'动态确定的阈值：{dynamic_threshold}')
             # Evaluate ViT-Anomaly model
             evaluation_results = evaluate_vit_anomaly(

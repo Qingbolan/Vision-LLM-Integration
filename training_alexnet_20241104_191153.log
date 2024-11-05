@@ -1,0 +1,2 @@
+2024-11-04 19:11:53,982 - INFO - Loading existing model checkpoint from ./checkpoints/best_alexnet.pth
+2024-11-04 19:11:54,335 - INFO - Model loaded from checkpoint with best loss: 0.0043960978439899915

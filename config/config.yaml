@@ -7,16 +7,16 @@ data:
   train_split: 0.8
 
 method:
-  type: supervised          # Available options: supervised, unsupervised
+  type: unsupervised          # Available options: supervised, unsupervised
 
   supervised:
     model:
-      name: alexnet           # Available options: resnet50, alexnet, vgg16, vit, efficientnet
+      name: vit           # Available options: resnet50, alexnet, vgg16, vit
       pretrained: False
       num_classes: 2
       learning_rate: 0.0001
       weight_decay: 0.00001
-      num_epochs: 5
+      num_epochs: 10
       device: cuda
 
   unsupervised:

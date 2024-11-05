@@ -4,8 +4,9 @@ import logging
 from datetime import datetime
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import time  # 导入time模块
 
-def train_model(
+def train_supervised_model(
     model,
     dataloaders,
     criterion,
@@ -42,11 +43,15 @@ def train_model(
     training_stats = {
         'train_losses': [],
         'val_losses': [],
-        'best_epoch': 0
+        'best_epoch': 0,
+        'total_training_time': 0  # 初始化总训练时间
     }
 
     model = model.to(device)
-    
+
+    # 记录训练开始时间
+    start_time = time.time()
+
     for epoch in range(1, num_epochs + 1):
         logging.info(f'Epoch {epoch}/{num_epochs}')
         logging.info('-' * 10)
@@ -127,8 +132,14 @@ def train_model(
             }, checkpoint_file)
             logging.info(f'Checkpoint saved at epoch {epoch}')
 
+    # 记录训练结束时间
+    end_time = time.time()
+    total_time = end_time - start_time
+    training_stats['total_training_time'] = total_time  # 记录总训练时间
+
     logging.info('Training completed')
     logging.info(f'Best val Loss: {best_loss:.4f} at epoch {training_stats["best_epoch"]}')
+    logging.info(f'Total training time: {total_time/60:.2f} minutes')  # 以分钟为单位记录
 
     # Load best model weights
     model.load_state_dict(best_model_wts)

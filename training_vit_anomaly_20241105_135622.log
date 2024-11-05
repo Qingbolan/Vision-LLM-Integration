@@ -1,0 +1,11 @@
+2024-11-05 13:56:22,998 - INFO - Epoch 1/1
+2024-11-05 13:56:22,998 - INFO - ----------
+2024-11-05 15:29:07,213 - INFO - train Loss: 0.2668
+2024-11-05 15:34:57,714 - INFO - val Loss: 0.0406
+2024-11-05 15:34:58,691 - INFO - Best model saved at epoch 1
+2024-11-05 15:34:58,691 - INFO - Training completed
+2024-11-05 15:34:58,691 - INFO - Best val Loss: 0.0406 at epoch 1
+2024-11-05 15:34:58,694 - INFO - Training completed
+2024-11-05 15:34:58,694 - INFO - Best val Loss: 0.0406 at epoch 1
+2024-11-05 15:34:58,694 - INFO - Total training time: 98.59 minutes
+2024-11-05 15:34:58,835 - INFO - Loss plot saved at ./checkpoints/vit_anomaly_loss_per_epoch.png

@@ -4,6 +4,8 @@ import os
 import logging
 from datetime import datetime
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
+import time
 
 def train_vit_anomaly(
     model,
@@ -12,7 +14,8 @@ def train_vit_anomaly(
     num_epochs,
     device,
     checkpoint_path=None,
-    save_every=5
+    save_every=5,
+    model_name="vit_anomaly"
 ):
     logging.basicConfig(
         level=logging.INFO,
@@ -22,6 +25,14 @@ def train_vit_anomaly(
             logging.StreamHandler()
         ]
     )
+    # Check for existing model checkpoint
+    best_model_path = os.path.join(checkpoint_path, f'best_{model_name}.pth')
+    if os.path.exists(best_model_path):
+        logging.info(f"Loading existing model checkpoint from {best_model_path}")
+        checkpoint = torch.load(best_model_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        logging.info(f"Model loaded from checkpoint with best loss: {checkpoint['loss']}")
+        return model, checkpoint.get('training_stats', {})
     
     try:
         best_loss = float('inf')
@@ -33,6 +44,9 @@ def train_vit_anomaly(
         }
 
         model = model.to(device)
+        
+        # 记录训练开始时间
+        start_time = time.time()
         
         for epoch in range(1, num_epochs + 1):
             logging.info(f'Epoch {epoch}/{num_epochs}')
@@ -128,6 +142,31 @@ def train_vit_anomaly(
 
         # 加载最佳模型权重
         model.load_state_dict(best_model_wts)
+        
+        # 记录训练结束时间
+        end_time = time.time()
+        total_time = end_time - start_time
+        training_stats['total_training_time'] = total_time  # 记录总训练时间
+
+        logging.info('Training completed')
+        logging.info(f'Best val Loss: {best_loss:.4f} at epoch {training_stats["best_epoch"]}')
+        logging.info(f'Total training time: {total_time/60:.2f} minutes')  # 以分钟为单位记录
+
+        # Load best model weights
+        model.load_state_dict(best_model_wts)
+
+        # Plot loss per epoch
+        plt.figure()
+        plt.plot(training_stats['train_losses'], label='Train Loss')
+        plt.plot(training_stats['val_losses'], label='Validation Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.title(f'{model_name} Loss per Epoch')
+        plot_path = os.path.join(checkpoint_path, f'{model_name}_loss_per_epoch.png')
+        plt.savefig(plot_path)
+        plt.close()
+        logging.info(f'Loss plot saved at {plot_path}')
         
         return model, training_stats
 

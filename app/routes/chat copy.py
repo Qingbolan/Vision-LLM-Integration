@@ -7,8 +7,7 @@ from dotenv import load_dotenv
 import json
 import re
 
-import src.classfication
-
+import src.utils.classfication as classification
 
 bp = Blueprint('chat',__name__,url_prefix='/chat')
 

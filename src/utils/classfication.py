@@ -7,6 +7,7 @@ from PIL import Image
 import random
 import logging
 from src.llm.prompt import LLM_prompt_enhance
+from src.data.get_and_store_dataset_info import get_recent_model_dataset_info
 
 from src.models import (
     get_resnet_model, 
@@ -230,7 +231,7 @@ def get_image_files(dataset_path):
                 image_files.append(os.path.join(root, file))
     return image_files
 
-def main(config_path='config/config.yaml', ORIGINAL_PROMPT = "请根据以下信息回答问题。"):
+def main(image_path="random",config_path='config/config.yaml'):
     """
     主函数，用于测试深度模型的调用，包括数据集选择、模型加载、图像选择和预测生成提示词。
     """
@@ -369,8 +370,12 @@ def main(config_path='config/config.yaml', ORIGINAL_PROMPT = "请根据以下信
         return
 
     # 随机选择一张图像作为测试
-    test_image_path = random.choice(image_files)
-    logging.info(f"随机选择的测试图像: {test_image_path}")
+    if image_path == "random":
+        test_image_path = random.choice(image_files)
+        logging.info(f"the img path is: {test_image_path}")
+    else:
+        test_image_path = image_path
+        logging.info(f"the img path is: {test_image_path}")
 
     # 定义图像预处理转换
     transform = transforms.Compose([
@@ -402,9 +407,13 @@ def main(config_path='config/config.yaml', ORIGINAL_PROMPT = "请根据以下信
         logging.error(f"classification failed: {str(e)}")
         return
 
+    DeepLearningModelAndDataSetMessage = f"模型名称: {model_abbreviation}，数据集: {dataset_name}"
+    
+    DeepLearningModelAndDataSetMessage = get_recent_model_dataset_info()
+    
     # 生成增强后的提示词
     try:
-        enhanced_prompt = LLM_prompt_enhance(model_info, classification_result, ORIGINAL_PROMPT, logging)
+        enhanced_prompt = LLM_prompt_enhance(model_info, classification_result, DeepLearningModelAndDataSetMessage, logging)
     except Exception as e:
         logging.error(f"生成提示词失败: {str(e)}")
         return
@@ -412,8 +421,7 @@ def main(config_path='config/config.yaml', ORIGINAL_PROMPT = "请根据以下信
     # 输出增强后的提示词
     logging.info("prompt: ")
     logging.info(enhanced_prompt)
-    print("增强后的 LLM 提示词:")
-    print(enhanced_prompt)
+    return enhanced_prompt
 
 # if __name__ == '__main__':
 # please run the __classification_test.py to test the function, the __main__ function is not working in this file

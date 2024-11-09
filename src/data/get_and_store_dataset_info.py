@@ -190,3 +190,21 @@ def read_data_info(data_info_path):
         return {}
     with open(data_info_path, 'r', encoding='utf-8') as f:
         return json.load(f)
+
+from config.config_operator import get_model_dataset_info
+
+def get_recent_model_dataset_info():
+    """
+    Args:
+        data_info_path (str): data_info.json 文件的路径。
+    
+    Returns:
+        dict: 最近一次训练的模型信息。
+    """
+    setting = get_model_dataset_info()
+    print(setting)
+    
+    data_info = read_data_info(get_model_dataset_info()['data_info_path'])
+    if not data_info:
+        return {}
+    return data_info

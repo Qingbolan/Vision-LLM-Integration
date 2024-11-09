@@ -1,4 +1,4 @@
-def LLM_prompt_enhance(model_info, classification_result, original_prompt,logging):
+def LLM_prompt_enhance(model_info, classification_result, DeepLearningModelAndDataSetMessage,logging):
     """
     根据模型的分类或异常检测结果增强 LLM 的提示词。
 
@@ -16,19 +16,19 @@ def LLM_prompt_enhance(model_info, classification_result, original_prompt,loggin
         if method_type == 'supervised':
             label = classification_result.get('predicted_label', 'Unknown')
             probability = classification_result.get('probability', 0.0)
-            enhanced_prompt = f"{original_prompt}\n\n检测到的图像类别为: {label}，置信度为: {probability*100:.2f}%。"
-            logging.info(f"增强后的提示词 (Supervised)正在使用{model_info['model']}进行检测: {enhanced_prompt}")
+            enhanced_prompt = f"检测到的图像类别为: {label}，置信度为: {probability*100:.2f}%。\n\n 关于数据集以及我们使用的模型信息是{DeepLearningModelAndDataSetMessage}"
+            logging.info(f"(Supervised)[{model_info['model']}]:{enhanced_prompt}")
             return enhanced_prompt
 
         elif method_type in ['unsupervised', 'vit_anomaly']:
             if method_type == 'vit_anomaly':
                 anomaly_score = classification_result.get('anomaly_score', 0.0)
-                enhanced_prompt = f"{original_prompt}\n\n检测到的异常得分为: {anomaly_score:.4f}。"
+                enhanced_prompt = f"检测到的异常得分为: {anomaly_score:.4f}。\n\n 关于数据集以及我们使用的模型信息是{DeepLearningModelAndDataSetMessage}"
             else:
                 recon_error = classification_result.get('reconstruction_error', 0.0)
-                enhanced_prompt = f"{original_prompt}\n\n图像的重构误差为: {recon_error:.4f}。"
+                enhanced_prompt = f"图像的重构误差为: {recon_error:.4f}。\n\n 关于数据集以及我们使用的模型信息是{DeepLearningModelAndDataSetMessage}"
 
-            logging.info(f"增强后的提示词 (Unsupervised): {enhanced_prompt}")
+            logging.info(f"(Unsupervised): {enhanced_prompt}")
             return enhanced_prompt
 
         else:

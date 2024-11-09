@@ -1,0 +1,67 @@
+{
+    "dataset_info": {
+        "description": "ChestMNIST is part of MedMNIST, which includes 18 standardized datasets for 2D and 3D biomedical image classification with multiple size options: 28 (MNIST-like), 64, 128, and 224. ChestMNIST focuses on Chest X-Ray classification tasks, supporting both Multi-Label (14 labels) and Binary-Class (2 labels) classifications. The dataset contains 112,120 images, divided into 78,468 training samples, 11,219 validation samples, and 22,433 testing samples. Images are standardized to sizes of 28, 64, 128, and 224 pixels with RGB channels.",
+        "labels": {
+            "0": "Negative",
+            "1": "Positive"
+        },
+        "source": "https://github.com/MedMNIST/MedMNIST, medmnist.com",
+        "version": "1",
+        "sample_count": {
+            "train": 78468,
+            "validation": 11219,
+            "test": 22433
+        },
+        "additional_info": {
+            "Contributors": "Jiancheng Yang, Rui Shi, Donglai Wei, Zequan Liu, Lin Zhao, Bilian Ke, Hanspeter Pfister, Bingbing Ni",
+            "Affiliations": "1 Shanghai Jiao Tong University, Shanghai, China; 2 Boston College, Chestnut Hill, MA; 3 RWTH Aachen University, Aachen, Germany; 4 Fudan Institute of Metabolic Diseases, Zhongshan Hospital, Fudan University, Shanghai, China; 5 Shanghai General Hospital, Shanghai Jiao Tong University School of Medicine, Shanghai, China; 6 Harvard University, Cambridge, MA",
+            "Dataset_Paper": "Jiancheng Yang, Rui Shi, Donglai Wei, Zequan Liu, Lin Zhao, Bilian Ke, Hanspeter Pfister, Bingbing Ni. MedMNIST: 18x Standardized Datasets for 2D and 3D Biomedical Image Classification with Multiple Size Options: 28 (MNIST-Like), 64, 128, and 224."
+        }
+    },
+    "model_training_info": [
+        {
+            "model_name": "alexnet",
+            "method_type": "supervised",
+            "training_time": "2024-11-09 16:43:15",
+            "evaluation_results": {
+                "accuracy": 0.8272727272727273,
+                "precision": 0.8080808080808081,
+                "recall": 1.0,
+                "f1": 0.893854748603352,
+                "confusion_matrix": [
+                    [
+                        11,
+                        19
+                    ],
+                    [
+                        0,
+                        80
+                    ]
+                ]
+            },
+            "additional_metadata": {}
+        },
+        {
+            "model_name": "resnet50",
+            "method_type": "supervised",
+            "training_time": "2024-11-09 16:52:22",
+            "evaluation_results": {
+                "accuracy": 0.7181818181818181,
+                "precision": 0.7247706422018348,
+                "recall": 0.9875,
+                "f1": 0.8359788359788359,
+                "confusion_matrix": [
+                    [
+                        0,
+                        30
+                    ],
+                    [
+                        1,
+                        79
+                    ]
+                ]
+            },
+            "additional_metadata": {}
+        }
+    ]
+}

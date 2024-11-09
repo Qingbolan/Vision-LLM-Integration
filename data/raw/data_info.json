@@ -1,0 +1,113 @@
+{
+    "dataset_info": {
+        "description": "The dataset contains concrete images having cracks. The data is collected from various METU Campus Buildings. The dataset is divided into two classes: negative and positive crack images for image classification. Each class has 20000 images, with a total of 40000 images of 227x227 pixels with RGB channels. The dataset is generated from 458 high-resolution images (4032x3024 pixels) using the method proposed by Zhang et al (2016). High-resolution images exhibit variance in surface finish and illumination conditions. No data augmentation such as random rotation or flipping is applied.",
+        "labels": {
+            "0": "No Crack",
+            "1": "Crack"
+        },
+        "source": "https://data.mendeley.com/datasets/5y9wdsg2zt/2",
+        "version": "2",
+        "sample_count": {
+            "0": 20000,
+            "1": 20000
+        },
+        "additional_info": {
+            "DOI": "10.17632/5y9wdsg2zt.2",
+            "Contributor": "Çağlar Fırat Özgenel",
+            "Published_Date": "23 July 2019",
+            "Method": "Generated using the method proposed by Zhang et al (2016)",
+            "Image_Details": "227x227 pixels with RGB channels, sourced from 458 high-resolution images (4032x3024 pixels)",
+            "Data_Augmentation": "No data augmentation (no random rotation or flipping)"
+        }
+    },
+    "model_training_info": [
+        {
+            "model_name": "resnet50",
+            "method_type": "supervised",
+            "training_time": "2024-11-09 17:04:23",
+            "evaluation_results": {
+                "accuracy": 0.9995,
+                "precision": 0.9992503748125937,
+                "recall": 0.99975,
+                "f1": 0.9995001249687578,
+                "confusion_matrix": [
+                    [
+                        3997,
+                        3
+                    ],
+                    [
+                        1,
+                        3999
+                    ]
+                ]
+            },
+            "additional_metadata": {}
+        },
+        {
+            "model_name": "alexnet",
+            "method_type": "supervised",
+            "training_time": "2024-11-09 17:05:23",
+            "evaluation_results": {
+                "accuracy": 0.998125,
+                "precision": 0.9962640099626401,
+                "recall": 1.0,
+                "f1": 0.9981285090455396,
+                "confusion_matrix": [
+                    [
+                        3985,
+                        15
+                    ],
+                    [
+                        0,
+                        4000
+                    ]
+                ]
+            },
+            "additional_metadata": {}
+        },
+        {
+            "model_name": "vgg16",
+            "method_type": "supervised",
+            "training_time": "2024-11-09 17:07:00",
+            "evaluation_results": {
+                "accuracy": 0.99875,
+                "precision": 0.9985007496251874,
+                "recall": 0.999,
+                "f1": 0.9987503124218946,
+                "confusion_matrix": [
+                    [
+                        3994,
+                        6
+                    ],
+                    [
+                        4,
+                        3996
+                    ]
+                ]
+            },
+            "additional_metadata": {}
+        },
+        {
+            "model_name": "vit",
+            "method_type": "supervised",
+            "training_time": "2024-11-09 17:09:06",
+            "evaluation_results": {
+                "accuracy": 0.9955,
+                "precision": 0.9972403411941796,
+                "recall": 0.99375,
+                "f1": 0.9954921111945906,
+                "confusion_matrix": [
+                    [
+                        3989,
+                        11
+                    ],
+                    [
+                        25,
+                        3975
+                    ]
+                ]
+            },
+            "additional_metadata": {}
+        }
+    ]
+}

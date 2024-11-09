@@ -8,6 +8,8 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import seaborn as sns
 import os
 
+from src.data.get_and_store_dataset_info import upsert_model_training_info
+
 def evaluate_autoencoder(model, dataloader, device, checkpoint_path, num_images=10, threshold=None):
     model.eval()
     recon_errors = []
@@ -88,13 +90,46 @@ def evaluate_autoencoder(model, dataloader, device, checkpoint_path, num_images=
     plt.close()
     print(f'Confusion matrix saved at {cm_path}')
 
-    return {
+    # 准备评估结果字典
+    evaluation_results = {
         'accuracy': accuracy,
         'precision': precision,
         'recall': recall,
         'f1_score': f1,
         'confusion_matrix': cm.tolist()
     }
+
+    # 推断 data_info.json 的存储位置
+    # 如果 checkpoint_path 是 './checkpoints/', 则 data_info.json 位于 './data/raw/data_info.json'
+    # 否则，假设 checkpoint_path 是 './checkpoints/SomeDataset/', 则 data_info.json 位于 './data/SomeDataset/data_info.json'
+    default_checkpoint_dir = './checkpoints/'
+    if os.path.abspath(checkpoint_path) == os.path.abspath(default_checkpoint_dir):
+        data_info_path = os.path.join('./data/raw/', 'data_info.json')
+    else:
+        # 获取相对于 checkpoints/ 目录的子目录
+        relative_path = os.path.relpath(checkpoint_path, default_checkpoint_dir)
+        data_info_path = os.path.join('./data/', relative_path, 'data_info.json')
+    
+    # 确保 data_info.json 所在目录存在
+    data_info_dir = os.path.dirname(data_info_path)
+    os.makedirs(data_info_dir, exist_ok=True)
+
+    # 记录模型的训练和评估信息
+    # 假设模型名称和方法类型可以从模型对象或其他来源获取
+    # 这里需要您根据实际情况传递正确的 model_name 和 method_type
+    # 例如，如果模型名称存储在 model.name 中
+    model_name = getattr(model, 'name', 'autoencoder')  # 默认名称为 'autoencoder'
+    method_type = 'unsupervised'  # 根据您的实际情况设置
+
+    # 调用 upsert_model_training_info 函数
+    upsert_model_training_info(
+        data_info_path=data_info_path,
+        model_name=model_name,
+        method_type=method_type,
+        evaluation_results=evaluation_results
+    )
+
+    return evaluation_results
 
 def plot_reconstruction_error(recon_errors, labels, checkpoint_path):
     plt.figure(figsize=(10,6))

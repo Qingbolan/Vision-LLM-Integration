@@ -1,0 +1,4 @@
+2024-11-09 17:03:35,177 - INFO - Loading existing model checkpoint from ./checkpoints/best_resnet50.pth
+2024-11-09 17:03:35,499 - INFO - Model loaded from checkpoint with best loss: 0.001601557937101461
+2024-11-09 17:04:23,585 - INFO - 添加新模型训练信息：resnet50 - supervised
+2024-11-09 17:04:23,586 - INFO - 数据已保存到 ./data/raw/data_info.json

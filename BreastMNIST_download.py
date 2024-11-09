@@ -19,6 +19,7 @@ train_dataset = BreastMNIST(split='train', transform=transform, download=True)
 # Create positive and negative directories
 positive_dir = os.path.join(data_dir, 'positive')
 negative_dir = os.path.join(data_dir, 'negative')
+raw_dir = os.path.join(data_dir, 'raw')
 os.makedirs(positive_dir, exist_ok=True)
 os.makedirs(negative_dir, exist_ok=True)
 
@@ -45,6 +46,7 @@ for idx, (img, label) in enumerate(train_dataset):
 
     # Save the image
     img_pil.save(save_path)
+    # img_pil.save(os.path.join(raw_dir, f'img_{idx}.png'))
 
     # Optional: Print progress every 100 images
     if (idx + 1) % 100 == 0:

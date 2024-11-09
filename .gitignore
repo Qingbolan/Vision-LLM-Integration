@@ -4,4 +4,6 @@ data/raw/Positive/*.jpg
 data/BreastMNIST/Positive/*.png
 data/BreastMNIST/Negative/*.png
 checkpoints/*.pth
-checkpoints/*.png
+# checkpoints/*.png
+checkpoints/BreastMNIST/*.pth
+.env

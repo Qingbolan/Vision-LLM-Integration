@@ -1,0 +1,4 @@
+2024-11-09 17:07:29,689 - INFO - Loading existing model checkpoint from ./checkpoints/best_vit.pth
+2024-11-09 17:07:30,578 - INFO - Model loaded from checkpoint with best loss: 0.013333865594002419
+2024-11-09 17:09:06,566 - INFO - 添加新模型训练信息：vit - supervised
+2024-11-09 17:09:06,566 - INFO - 数据已保存到 ./data/raw/data_info.json

@@ -1,4 +1,0 @@
-2024-11-09 17:05:49,867 - INFO - Loading existing model checkpoint from ./checkpoints/best_vgg16.pth
-2024-11-09 17:05:51,950 - INFO - Model loaded from checkpoint with best loss: 0.003919250693114009
-2024-11-09 17:07:00,476 - INFO - 添加新模型训练信息：vgg16 - supervised
-2024-11-09 17:07:00,484 - INFO - 数据已保存到 ./data/raw/data_info.json

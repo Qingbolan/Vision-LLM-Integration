@@ -1,4 +1,0 @@
-2024-11-09 17:04:49,871 - INFO - Loading existing model checkpoint from ./checkpoints/best_alexnet.pth
-2024-11-09 17:04:50,657 - INFO - Model loaded from checkpoint with best loss: 0.005066178885579575
-2024-11-09 17:05:23,953 - INFO - 添加新模型训练信息：alexnet - supervised
-2024-11-09 17:05:23,956 - INFO - 数据已保存到 ./data/raw/data_info.json

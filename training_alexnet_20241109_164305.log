@@ -1,5 +1,0 @@
-2024-11-09 16:43:05,875 - INFO - Loading existing model checkpoint from ./checkpoints/BreastMNIST/best_alexnet.pth
-2024-11-09 16:43:06,432 - INFO - Model loaded from checkpoint with best loss: 0.49651771567084574
-2024-11-09 16:43:15,458 - INFO - ./data/BreastMNIST\data_info.json 不存在，将创建一个新的文件。
-2024-11-09 16:43:15,458 - INFO - 添加新模型训练信息：alexnet - supervised
-2024-11-09 16:43:15,458 - INFO - 数据已保存到 ./data/BreastMNIST\data_info.json

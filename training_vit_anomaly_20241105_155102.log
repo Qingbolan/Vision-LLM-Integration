@@ -1,2 +1,0 @@
-2024-11-05 15:51:02,938 - INFO - Loading existing model checkpoint from ./checkpoints/best_vit_anomaly.pth
-2024-11-05 15:51:03,507 - INFO - Model loaded from checkpoint with best loss: 0.04061995312571526

@@ -1,4 +1,0 @@
-2024-11-09 16:52:11,460 - INFO - Loading existing model checkpoint from ./checkpoints/BreastMNIST/best_resnet50.pth
-2024-11-09 16:52:11,887 - INFO - Model loaded from checkpoint with best loss: 0.5582417238842358
-2024-11-09 16:52:22,438 - INFO - 添加新模型训练信息：resnet50 - supervised
-2024-11-09 16:52:22,439 - INFO - 数据已保存到 ./data/BreastMNIST\data_info.json

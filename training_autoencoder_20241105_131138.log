@@ -1,2 +1,0 @@
-2024-11-05 13:11:38,500 - INFO - Loading existing model checkpoint from ./checkpoints/best_autoencoder.pth
-2024-11-05 13:11:39,254 - INFO - Model loaded from checkpoint with best loss: 7736.567677556818

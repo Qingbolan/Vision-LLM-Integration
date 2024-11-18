@@ -3,6 +3,8 @@ data/raw/Negative/*.jpg
 data/raw/Positive/*.jpg
 data/BreastMNIST/Positive/*.png
 data/BreastMNIST/Negative/*.png
+data/ChestMNIST/Positive/*.png
+data/ChestMNIST/Negative/*.png
 checkpoints/*.pth
 # checkpoints/*.png
 checkpoints/BreastMNIST/*.pth

@@ -1,6 +1,6 @@
 {
     "dataset_info": {
-        "description": "BreastMNIST is part of MedMNIST, which includes 18 standardized datasets for 2D and 3D biomedical image classification with multiple size options: 28 (MNIST-like), 64, 128, and 224. ChestMNIST focuses on Chest X-Ray classification tasks, supporting both Multi-Label (14 labels) and Binary-Class (2 labels) classifications. The dataset contains 112,120 images, divided into 78,468 training samples, 11,219 validation samples, and 22,433 testing samples. Images are standardized to sizes of 28, 64, 128, and 224 pixels with RGB channels.",
+        "description": "ChestMNIST is part of MedMNIST, which includes 18 standardized datasets for 2D and 3D biomedical image classification with multiple size options: 28 (MNIST-like), 64, 128, and 224. ChestMNIST focuses on Chest X-Ray classification tasks, supporting both Multi-Label (14 labels) and Binary-Class (2 labels) classifications. The dataset contains 112,120 images, divided into 78,468 training samples, 11,219 validation samples, and 22,433 testing samples. Images are standardized to sizes of 28, 64, 128, and 224 pixels with RGB channels.",
         "labels": {
             "0": "Negative",
             "1": "Positive"

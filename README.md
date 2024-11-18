@@ -1,4 +1,4 @@
-# Deep Learning Visual Analysis with LLM Integration
+# VisionaryLLM: An Extensible Framework for Enhancing Large Language Models with Doman-Specific Vision Tasks Using Deep Learning
 
 [![python](https://img.shields.io/badge/-Python_3.7_%7C_3.8_%7C_3.9_%7C_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pytorch](https://img.shields.io/badge/PyTorch_1.9+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
@@ -36,39 +36,66 @@ please see project website to learn more: [https://cs5242-demo.silan.tech](https
 
 ## Project Motivation
 
-In various professional fields such as structural health monitoring, industrial inspection, and medical imaging, accurate and efficient detection of anomalies is crucial. Traditional manual inspection methods are often time-consuming and susceptible to human error. This project aims to bridge the gap by developing a **Deep Learning Visual Analysis** framework that integrates traditional deep learning models with Large Language Models (LLMs). This integration seeks to enhance not only the detection accuracy but also the interpretability and interactivity of the analysis process.
+The rapid advancement of Large Language Models (LLMs) has revolutionized many aspects of artificial intelligence, yet their application in professional domains, particularly those requiring specialized visual analysis, remains significantly constrained. This limitation creates a critical gap between the theoretical capabilities of LLMs and their practical utility in professional settings.
 
-### Key Objectives:
+## Current Challenges and Research Gap
 
-- **Develop a General Framework**: Create a system that seamlessly integrates supervised and unsupervised deep learning models with LLMs to handle diverse visual tasks.
-- **Innovative Segmentation Strategy**: Implement an intelligent image segmentation approach that transforms complex visual tasks into manageable classification problems.
-- **Enhance Interpretability**: Utilize LLMs to provide natural language descriptions and insights based on the visual analysis results, making the system more user-friendly and informative.
-- **Demonstrate Practical Application**: Apply the framework to concrete crack detection as a case study, showcasing its versatility and practical utility beyond basic academic exercises.
+The integration of LLMs with domain-specific visual tasks presents several compelling challenges that motivate our research:
 
-This project not only deepens our understanding of integrating different AI technologies but also contributes practical solutions to real-world problems in visual analysis and human-machine interaction.
+1. **Lack of Professional-Grade Analysis**
+
+   - Current LLMs, while capable of basic image interpretation, fall short in providing the quantifiable confidence levels required in professional settings
+   - Professional domains such as structural engineering and medical imaging demand precise measurements and reliable metrics that meet industry standards
+   - The absence of these capabilities limits the practical adoption of LLMs in critical professional applications
+2. **Black-Box Decision Making**
+
+   - Existing LLM implementations operate as black boxes, providing conclusions without transparent reasoning
+   - Professionals cannot verify the analysis process or understand how specific visual elements influence decisions
+   - This opacity poses significant risks in domains where decision validation is crucial for safety and compliance
+3. **Integration Complexity**
+
+   - The current landscape lacks a standardized framework for integrating LLMs with domain-specific visual tasks
+   - Organizations must develop custom solutions for each domain, leading to:
+     - Inconsistent implementations across different fields
+     - High development and maintenance costs
+     - Limited scalability and reusability
+
+## Key Objectives
+
+These challenges present a significant opportunity for innovation in the field of AI and computer vision. By developing VisionaryLLM, we aim to bridge the gap between general-purpose LLMs and specialized visual analysis requirements. Our framework addresses these limitations through:
+
+- **Standardized Integration**: A flexible architecture that simplifies the combination of vision models with LLMs
+- **Transparent Analysis**: Implementation of gradient-weighted class activation mapping (Grad-CAM) for result visualization
+- **Cross-Domain Applicability**: Demonstrated effectiveness in diverse fields, from structural engineering to medical imaging
 
 ## Code Structure
 
-- **Data Loading and Preprocessing**: `src/data/dataset.py`, `src/data/preprocess.py`
-- **Model Definitions**:
-  - `src/models/resnet_model.py`
-  - `src/models/alexnet_model.py`
-  - `src/models/vit_model.py`
-  - `src/models/autoencoder.py` (DCAE)
-  - `src/models/variational_autoencoder.py` (DCVAE)
-  - `src/models/vit_anomaly.py` (ViT Anomaly Detection)
-- **Training Logic**:
-  - `src/training/trainer.py`
-  - `src/training/autoencoder_trainer.py`
-  - `src/training/variational_autoencoder_trainer.py`
-  - `src/training/vit_anomaly_trainer.py`
-- **Evaluation Code**:
-  - `src/evaluation/evaluator.py`
-  - `src/evaluation/autoencoder_evaluator.py`
-  - `src/evaluation/variational_autoencoder_evaluator.py`
-  - `src/evaluation/vit_anomaly_evaluator.py`
-- **LLM Integration**: `src/llm/agent.py`
-- **Main Script**: `main.py`
+- **Backend**: `app`, run `main.py` to start the backend on https://localhost:5100
+- **Data Set and Backend photo stores:**
+  - `data/_input`: all the input data get from the frontend
+  - `data/_output`: all the deep learning models classification process generation by GradCAM
+  - `data/raw`: the crack dataset
+  - `data/{}other_data_set_name}`
+- **AI Agorithm and utils support:**
+  - **Data Loading and Preprocessing**: `src/data/dataset.py`, `src/data/preprocess.py`
+  - **Model Definitions**:
+    - `src/models/resnet_model.py`
+    - `src/models/alexnet_model.py`
+    - `src/models/vit_model.py`
+    - `src/models/autoencoder.py` (DCAE)
+    - `src/models/variational_autoencoder.py` (DCVAE)
+    - `src/models/vit_anomaly.py` (ViT Anomaly Detection)
+  - **Training Logic**:
+    - `src/training/trainer.py`
+    - `src/training/autoencoder_trainer.py`
+    - `src/training/variational_autoencoder_trainer.py`
+    - `src/training/vit_anomaly_trainer.py`
+  - **Evaluation Code**:
+    - `src/evaluation/evaluator.py`
+    - `src/evaluation/autoencoder_evaluator.py`
+    - `src/evaluation/variational_autoencoder_evaluator.py`
+    - `src/evaluation/vit_anomaly_evaluator.py`
+  - **LLM Integration**: `src/llm/agent.py`
 - **Configuration Files**: `config/config.yaml`, various files under `configs/`
 
 ## Project Setup
@@ -111,6 +138,12 @@ data/
 - **Positive**: Images with cracks.
 
 *Note*: The framework is designed to accommodate various datasets, enabling its application to diverse visual tasks beyond crack detection.
+
+```bash
+# also you can run the following script to get other dataset
+python BreastMNIST_download.py
+python ChestMNIST_download.py
+```
 
 ## Intelligent Segmentation Strategy
 

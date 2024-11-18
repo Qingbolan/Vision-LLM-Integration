@@ -22,20 +22,20 @@
         {
             "model_name": "alexnet",
             "method_type": "supervised",
-            "training_time": "2024-11-09 16:43:15",
+            "training_time": "2024-11-10 23:42:25",
             "evaluation_results": {
-                "accuracy": 0.8272727272727273,
-                "precision": 0.8080808080808081,
-                "recall": 1.0,
-                "f1": 0.893854748603352,
+                "accuracy": 0.8333333333333334,
+                "precision": 0.84375,
+                "recall": 0.9473684210526315,
+                "f1": 0.8925619834710744,
                 "confusion_matrix": [
                     [
-                        11,
-                        19
+                        22,
+                        20
                     ],
                     [
-                        0,
-                        80
+                        6,
+                        108
                     ]
                 ]
             },
@@ -44,20 +44,64 @@
         {
             "model_name": "resnet50",
             "method_type": "supervised",
-            "training_time": "2024-11-09 16:52:22",
+            "training_time": "2024-11-10 23:38:02",
             "evaluation_results": {
-                "accuracy": 0.7181818181818181,
-                "precision": 0.7247706422018348,
-                "recall": 0.9875,
-                "f1": 0.8359788359788359,
+                "accuracy": 0.7435897435897436,
+                "precision": 0.7466666666666667,
+                "recall": 0.9824561403508771,
+                "f1": 0.8484848484848485,
                 "confusion_matrix": [
                     [
-                        0,
-                        30
+                        4,
+                        38
                     ],
                     [
-                        1,
-                        79
+                        2,
+                        112
+                    ]
+                ]
+            },
+            "additional_metadata": {}
+        },
+        {
+            "model_name": "vgg16",
+            "method_type": "supervised",
+            "training_time": "2024-11-10 23:48:01",
+            "evaluation_results": {
+                "accuracy": 0.7564102564102564,
+                "precision": 0.8392857142857143,
+                "recall": 0.8245614035087719,
+                "f1": 0.8318584070796461,
+                "confusion_matrix": [
+                    [
+                        24,
+                        18
+                    ],
+                    [
+                        20,
+                        94
+                    ]
+                ]
+            },
+            "additional_metadata": {}
+        },
+        {
+            "model_name": "vit",
+            "method_type": "supervised",
+            "training_time": "2024-11-10 23:53:36",
+            "evaluation_results": {
+                "accuracy": 0.7243589743589743,
+                "precision": 0.7795275590551181,
+                "recall": 0.868421052631579,
+                "f1": 0.8215767634854771,
+                "confusion_matrix": [
+                    [
+                        14,
+                        28
+                    ],
+                    [
+                        15,
+                        99
                     ]
                 ]
             },

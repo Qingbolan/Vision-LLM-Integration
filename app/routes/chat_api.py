@@ -7,13 +7,14 @@ import re
 import uuid
 import logging
 from werkzeug.utils import secure_filename
+from src.llm.prompt import get_system_message
 
 from src.utils.classfication import main as classification  # 确保路径正确
 
 bp = Blueprint('chat', __name__, url_prefix='/chat')
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # 加载环境变量
 load_dotenv('../../.env')
@@ -34,82 +35,8 @@ def normalize_path(path):
     return os.path.normpath(path).replace('\\', '/')
 
 # 全局临时存储字典
-uploaded_images = {}
+uploaded_images = []
 
-# 项目介绍信息（可根据需要修改或移除）
-PROJECT_INTRODUCTION = """
-研究目标：
-
-构建一个可扩展的视觉分析框架，通过深度学习和大语言模型增强复杂视觉任务的处理能力
-解决专业领域视觉分析中的自动化和智能化问题
-提供一个统一的框架来处理不同领域的视觉分析需求
-
-核心创新：
-
-多模型融合架构：
-
-监督学习模型：ResNet50、AlexNet、VGG16、ViT
-无监督学习模型：Autoencoder、VAE、ViT Anomaly
-自动化训练流程：
-
-实现了端到端的自动化训练过程
-智能模型选择和优化
-支持不同专业领域的数据适配
-
-LLM深度集成：
-
-不是简单的API调用，而是深度融合
-实现了自然语言交互界面
-提供专业的视觉分析解释
-
-技术架构：
-
-训练阶段：
-
-支持多领域数据输入（医疗、工业、科研等）
-自动化的模型训练流程
-完整的验证和评估系统
-
-推理阶段：
-
-支持多种视觉任务（分类、检测、分割）
-智能化的结果分析
-专业的报告生成
-
-实验验证：
-
-以裂缝检测为例进行了完整验证
-在监督学习任务中取得了接近100%的高精度
-在无监督学习任务中也达到了较高的性能
-
-主要贡献：
-
-提出了一个可扩展的视觉分析框架
-创新性地结合了多种深度学习模型和LLM
-实现了专业领域视觉分析的自动化和智能化
-提供了完整的训练和推理解决方案
-
-应用价值：
-
-可以快速适应不同专业领域的需求
-降低了专业视觉分析的使用门槛
-提高了分析结果的可解释性
-支持自然语言交互，提升用户体验
-
-未来展望：
-
-支持更多专业领域的扩展
-进一步提升模型性能
-增强系统的可解释性
-优化自动化训练流程
-
-这个项目的核心价值在于：
-
-提供了一个统一的框架来解决专业领域的视觉分析问题
-通过多模型融合和LLM集成提升了系统性能和易用性
-实现了从数据到结果的全流程自动化
-具有很强的实用价值和扩展性
-"""
 
 # 提取图像URL的函数
 def extract_image_urls(attachment_data):
@@ -131,6 +58,9 @@ def extract_image_urls(attachment_data):
     
     return image_urls
 
+
+chat_history = []  # 用于存储聊天历史
+
 # 流式响应生成器
 def stream(input_text, attachments, history, project_introduction):
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'), base_url=os.getenv('OPENAI_API_BASE'))
@@ -146,8 +76,8 @@ def stream(input_text, attachments, history, project_introduction):
             "role": "system",
             "content": f"""
 You are an AI assistant with advanced image analysis capabilities.
-{project_introduction}
 You can assist with analyzing images and answering related queries.
+{project_introduction}
 """
         }
     ]
@@ -163,20 +93,25 @@ You can assist with analyzing images and answering related queries.
 
     try:
         response_stream = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=messages,
             stream=True,
         )
         
+        index=0
         full_response = ""
         for chunk in response_stream:
-            if 'choices' in chunk and len(chunk['choices']) > 0 and 'delta' in chunk['choices'][0]:
-                delta = chunk['choices'][0]['delta']
-                if 'content' in delta:
-                    text = delta['content']
-                    full_response += text
-                    yield {"status": "processing", "chunk": text}
+            # print(chunk)
+            if chunk.choices[0].delta.content is not None:
+                text = chunk.choices[0].delta.content
+                full_response += text
+                # print(text,end="")
+                # print("\n\n=========================\n\n")
+                index+=len(text)
+                yield {"status": "processing", "chunk": text, "index": index}
         
+        print("\n\n=========================\n\n")
+        # print(full_response)
         yield {"status": "completed", "response": full_response}
     except Exception as e:
         logging.error(f"Error in stream function: {str(e)}")
@@ -201,31 +136,37 @@ def completion():
     logging.info(f"chat_num: {chat_num}")
     logging.info("=========================")
 
-    project_introduction = PROJECT_INTRODUCTION  # 可以根据需要修改或移除
+    project_introduction = get_system_message()
 
     def generate():
         full_response = ""
         
         try:
             # 如果有上传的图片及分析结果，添加到上下文
-            if chat_num in uploaded_images:
-                for img_info in uploaded_images[chat_num]:
-                    analysis_text = ""
-                    if 'predicted_label' in img_info['analysis']:
-                        analysis_text = f"图片 '{img_info['file_name']}' 的分类结果为: {img_info['analysis']['predicted_label']}，置信度: {img_info['analysis']['probability']*100:.2f}%."
-                    elif 'anomaly_score' in img_info['analysis']:
-                        analysis_text = f"图片 '{img_info['file_name']}' 的异常得分为: {img_info['analysis']['anomaly_score']:.4f}。"
-                    elif 'reconstruction_error' in img_info['analysis']:
-                        analysis_text = f"图片 '{img_info['file_name']}' 的重构误差为: {img_info['analysis']['reconstruction_error']:.4f}。"
-                    messages = {"role": "user", "content": analysis_text}
-                    history.append(messages)
+            if uploaded_images:
+                img_info = uploaded_images[-1]
+                print("\n\n=========================\n\n")
+                print(f"Uploaded image: {img_info['file_name']}\n\nAnalysis: {img_info['analysis']}")
+                history.append({
+                    "role": "system",
+                    "content": f"Uploaded image: {img_info['file_name']}\n\nAnalysis: {img_info['analysis']}"
+                })
+                print("\n\n=========================\n\n")
+                print(f"History: {history}")
+                print("\n\n=========================\n\n")
 
-            yield f"data: {json.dumps({'status': 'processing', 'chunk': '正在处理您的请求...'})}\n\n"
+
+
+            yield f"data: {json.dumps({'status': 'processing', 'chunk': ''})}\n\n"
             
             for result in stream(input_text, attachments, history, project_introduction):
                 if result["status"] == "processing":
-                    yield f"data: {json.dumps({'status': 'processing', 'chunk': result['chunk']})}\n\n"
-                elif result["status"] == "completed":
+                    print(result['chunk'],end="")
+                    if result['chunk']:
+                        yield f"data: {json.dumps({'status': 'processing', 'chunk': result['chunk'], 'text_index': result['index'] })}\n\n"
+                    # yield f"data: {json.dumps({'status': 'processing', 'chunk': result['chunk']})}\n\n"
+                    
+                if result["status"] == "completed":
                     full_response = result["response"]
                     break
                 elif result["status"] == "error":
@@ -275,6 +216,7 @@ def upload_files():
         filename = 'raw_' + str(uuid.uuid4()) + '.' + ext
             
         file_path = os.path.join(
+            'data',
             '_uploads',
             filename
         )
@@ -304,10 +246,6 @@ def upload_files():
     # 简化日志记录
     logging.info(f"Files uploaded successfully: {len(file_infos)} files")
     
-    # 如果有上传的文件，调用分析模块并存储结果
-    if chat_num not in uploaded_images:
-        uploaded_images[chat_num] = []
-    
     for file_info in file_infos:
         image_path = file_path  # 假设所有上传的文件路径都相同
         try:
@@ -319,7 +257,7 @@ def upload_files():
             return jsonify({'error': f'Failed to analyze image: {file_info["file_name"]}', 'details': str(e)}), 500
         
         # 将分析结果与图片信息结合
-        uploaded_images[chat_num].append({
+        uploaded_images.append({
             'file_name': file_info['file_name'],
             'file_url': file_info['file_url'],
             'analysis': analysis_result

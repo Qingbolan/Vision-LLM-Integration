@@ -1,7 +1,7 @@
 # from .DataBase import db as System_FileDB
 import os
 
-from .routes.chat import bp as chats_bp
+from .routes.chat_api import bp as chats_bp
 
 
 def create_app(app):

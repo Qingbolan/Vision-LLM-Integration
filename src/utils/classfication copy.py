@@ -6,7 +6,7 @@ from torchvision import transforms
 from PIL import Image
 import random
 import logging
-from src.llm.prompt import LLM_prompt_enhance, generate_reference_prompt
+from src.llm.prompt import LLM_prompt_enhance
 from src.data.get_and_store_dataset_info import get_recent_model_dataset_info
 
 from src.models import (
@@ -18,16 +18,13 @@ from src.models import (
     get_autoencoder_model,
     get_variational_autoencoder_model,
 )
-import numpy as np
-import matplotlib.pyplot as plt
-
 def setup_logging(log_file='model_utils.log'):
     """
     配置日志记录。
     """
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - Line: %(lineno)d - %(message)s',
+        format='%(asctime)s - %(levelname)s - %(message)s',
         handlers=[
             logging.FileHandler(log_file, mode='a', encoding='utf-8'),
             logging.StreamHandler()
@@ -214,6 +211,8 @@ def classification_by_model(model_info, image_path, transform, labels=None):
         logging.error(f"图片分类或异常检测失败: {str(e)}")
         raise
 
+
+
 def get_image_files(dataset_path):
     """
     获取指定目录下所有支持格式的图像文件路径。
@@ -232,219 +231,7 @@ def get_image_files(dataset_path):
                 image_files.append(os.path.join(root, file))
     return image_files
 
-class GradCAM:
-    def __init__(self, model, target_layer):
-        """
-        初始化 GradCAM 实例。
-
-        Args:
-            model (torch.nn.Module): 预训练模型。
-            target_layer (torch.nn.Module): 用于生成 Grad-CAM 的目标卷积层。
-        """
-        self.model = model
-        self.target_layer = target_layer
-        self.gradients = None
-        self.activations = None
-        logging.info(f"初始化 GradCAM，目标层: {target_layer}")
-        self._register_hooks()
-
-    def _register_hooks(self):
-        """
-        注册前向和反向钩子以捕获激活和梯度。
-        """
-        def forward_hook(module, input, output):
-            self.activations = output.detach()
-
-        def backward_hook(module, grad_in, grad_out):
-            self.gradients = grad_out[0].detach()
-
-        self.target_layer.register_forward_hook(forward_hook)
-        self.target_layer.register_backward_hook(backward_hook)
-
-    def generate_heatmap(self, input_tensor, class_idx=None):
-        """
-        生成 Grad-CAM 热力图。
-
-        Args:
-            input_tensor (torch.Tensor): 预处理后的输入张量。
-            class_idx (int, optional): 目标类别索引。如果为 None，则使用预测的最高概率类别。
-
-        Returns:
-            np.ndarray: 生成的热力图。
-        """
-        self.model.zero_grad()
-        output = self.model(input_tensor)
-
-        if class_idx is None:
-            class_idx = output.argmax(dim=1).item()
-
-        target = output[0, class_idx]
-        target.backward()
-
-        gradients = self.gradients  # [batch_size, channels, height, width]
-        activations = self.activations  # [batch_size, channels, height, width]
-
-        # 全局平均池化梯度
-        weights = torch.mean(gradients, dim=(2, 3), keepdim=True)  # [batch_size, channels, 1, 1]
-
-        # 计算加权和
-        weighted_activations = weights * activations  # [batch_size, channels, height, width]
-        cam = torch.sum(weighted_activations, dim=1, keepdim=True)  # [batch_size, 1, height, width]
-
-        # ReLU 激活
-        cam = torch.relu(cam)
-
-        # 归一化到 [0, 1]
-        cam = cam - cam.min()
-        cam = cam / cam.max()
-
-        # 转换为 NumPy 数组
-        cam = cam.cpu().numpy()[0, 0, :, :]
-
-        return cam
-
-def overlay_heatmap_on_image(img_path, heatmap, output_path, alpha=0.4, colormap=plt.cm.jet, min_size=227):
-    """
-    将热力图叠加到原始图像上并保存，确保输出图像至少为指定的最小尺寸。
-
-    Args:
-        img_path (str): 原始图像路径。
-        heatmap (np.ndarray): 生成的热力图。
-        output_path (str): 保存叠加图像的路径。
-        alpha (float, optional): 热力图的透明度。默认值为 0.4。
-        colormap: 颜色映射。默认为 jet。
-        min_size (int): 输出图像的最小边长。默认为227。
-    """
-    # 打开原始图像
-    img = Image.open(img_path).convert('RGB')
-    
-    # 计算调整后的尺寸，保持纵横比
-    width, height = img.size
-    aspect_ratio = width / height
-    
-    if width < min_size or height < min_size:
-        if aspect_ratio > 1:  # 宽图
-            new_width = max(min_size, int(min_size * aspect_ratio))
-            new_height = min_size
-        else:  # 高图
-            new_width = min_size
-            new_height = max(min_size, int(min_size / aspect_ratio))
-            
-        img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-        
-        # 调整热力图大小以匹配新的图像尺寸
-        heatmap = Image.fromarray(heatmap)
-        heatmap = heatmap.resize((new_width, new_height), Image.Resampling.LANCZOS)
-        heatmap = np.array(heatmap)
-    else:
-        # 如果原始图像已经够大，则保持热力图与原始图像相同大小
-        heatmap = Image.fromarray(heatmap)
-        heatmap = heatmap.resize((width, height), Image.Resampling.LANCZOS)
-        heatmap = np.array(heatmap)
-
-    # 创建热力图
-    heatmap = np.uint8(255 * heatmap)
-    heatmap = Image.fromarray(heatmap)
-    heatmap = heatmap.resize(img.size, Image.Resampling.LANCZOS)
-    heatmap = heatmap.convert("RGB")
-    heatmap = np.array(heatmap)
-    heatmap = colormap(heatmap[:, :, 0])[:, :, :3] * 255
-    heatmap = Image.fromarray(np.uint8(heatmap))
-
-    # 叠加图像
-    overlayed_img = Image.blend(img, heatmap, alpha=alpha)
-
-    # 保存叠加图像
-    overlayed_img.save(output_path, quality=95)  # 使用较高的质量设置
-    
-    # 记录最终图像尺寸
-    final_size = overlayed_img.size
-    logging.info(f"已保存 Grad-CAM 可视化图像: {output_path}, 尺寸: {final_size[0]}x{final_size[1]}")
-    
-    return final_size
-    
-def generate_grad_cam_visualization(model_info, image_path, transform, labels=None, output_dir='data/output'):
-    """
-    使用 Grad-CAM 生成并保存可视化图像。
-
-    Args:
-        model_info (dict): 包含模型实例和类型的字典，例如 {'model': model, 'type': 'supervised'}。
-        image_path (str): 图片文件路径。
-        transform (torchvision.transforms.Compose): 图片预处理转换。
-        labels (dict, optional): 类别标签映射字典，例如 {'0': 'Negative', '1': 'Positive'}。
-        output_dir (str, optional): 保存可视化图像的目录。默认值为 'data/output'。
-
-    Returns:
-        str: 生成的可视化图像的 URL，例如 'localhost:5100/DL-api/output/{照片}'。
-    """
-    if model_info['type'] != 'supervised':
-        logging.warning("Grad-CAM 仅适用于有监督模型。")
-        return
-
-    model = model_info['model']
-    device = next(model.parameters()).device
-
-    logging.info(f"使用的模型: {model.__class__.__name__}，设备: {device}")
-
-    # 创建输出目录
-    os.makedirs(output_dir, exist_ok=True)
-
-    # 打开并预处理图片
-    image = Image.open(image_path).convert('RGB')
-    input_tensor = transform(image).unsqueeze(0).to(device)  # 增加 batch 维度
-    logging.info(f"已加载并预处理图片: {image_path}")
-
-    # 确定目标层（以 ResNet50 为例）
-    if isinstance(model, torch.nn.Module):
-        if 'resnet' in model.__class__.__name__.lower():
-            target_layer = model.layer4[-1].conv3
-        elif 'alexnet' in model.__class__.__name__.lower():
-            target_layer = model.features[-1]
-        elif 'vgg' in model.__class__.__name__.lower():
-            target_layer = model.features[-1]
-        else:
-            logging.error("不支持的模型类型用于 Grad-CAM。")
-            return
-    else:
-        logging.error("无效的模型实例。")
-        return
-
-    logging.info(f"选择的目标层: {target_layer}")
-
-    # 初始化 Grad-CAM
-    grad_cam = GradCAM(model, target_layer)
-
-    # 生成热力图
-    heatmap = grad_cam.generate_heatmap(input_tensor)
-
-    # 获取预测的类别索引
-    with torch.no_grad():
-        outputs = model(input_tensor)
-        if isinstance(outputs, tuple):
-            outputs = outputs[0]  # 处理如 VAE 等模型的输出
-        probabilities = torch.softmax(outputs, dim=1)
-        top_prob, top_class = probabilities.topk(1, dim=1)
-        class_idx = top_class.item()
-        class_label = labels.get(str(class_idx), "Unknown") if labels else str(class_idx)
-        logging.info(f"预测类别: {class_label} (索引: {class_idx}), 概率: {top_prob.item():.4f}")
-
-    # 定义输出路径
-    image_name = os.path.basename(image_path)
-    output_filename = f'grad_cam_{image_name}'
-    output_path = os.path.join(output_dir, output_filename)
-
-    # 叠加热力图并保存
-    overlay_heatmap_on_image(image_path, heatmap, output_path)
-
-    # 构建返回的 URL
-    # 假设 data/output 对应的 URL 路径为 localhost:5100/DL-api/output/
-    url = f'http://localhost:5100/DL-api/output/{output_filename}'
-    logging.info(f"Grad-CAM 可视化图像的 URL: {url}")
-
-    # 返回 URL
-    return url
-
-def main(image_path="random", config_path='config/config.yaml'):
+def main(image_path="random",config_path='config/config.yaml'):
     """
     主函数，用于测试深度模型的调用，包括数据集选择、模型加载、图像选择和预测生成提示词。
     """
@@ -630,21 +417,6 @@ def main(image_path="random", config_path='config/config.yaml'):
     except Exception as e:
         logging.error(f"生成提示词失败: {str(e)}")
         return
-
-    # 生成 Grad-CAM 可视化图像
-    try:
-        grad_cam_output_url = generate_grad_cam_visualization(
-            model_info=model_info,
-            image_path=test_image_path,
-            transform=transform,
-            labels=labels_mapping,
-            output_dir='data/output'  # 设置默认输出目录为 data/output
-        )
-        logging.info(f"Grad-CAM visualize URL: {grad_cam_output_url}")
-        enhanced_prompt += generate_reference_prompt(grad_cam_output_url)
-        
-    except Exception as e:
-        logging.error(f"生成 Grad-CAM 可视化失败: {str(e)}")
 
     # 输出增强后的提示词
     # logging.info("prompt: ")

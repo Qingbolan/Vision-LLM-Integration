@@ -193,18 +193,88 @@ def read_data_info(data_info_path):
 
 from config.config_operator import get_model_dataset_info
 
+# def get_recent_model_dataset_info():
+#     """
+#     Args:
+#         data_info_path (str): data_info.json 文件的路径。
+    
+#     Returns:
+#         dict: 最近一次训练的模型信息。
+#     """
+#     setting = get_model_dataset_info()
+#     print(setting)
+    
+#     data_info = read_data_info(get_model_dataset_info()['data_info_path'])
+#     if not data_info:
+#         return {}
+#     return data_info
+
+
 def get_recent_model_dataset_info():
     """
-    Args:
-        data_info_path (str): data_info.json 文件的路径。
+    Reads the latest model and dataset information and combines it with the project description,
+    returning a single-line English string without line breaks.
     
     Returns:
-        dict: 最近一次训练的模型信息。
+        str: A single-line string containing project description, dataset information, and model training information.
     """
+
+    # Read data_info.json
     setting = get_model_dataset_info()
-    print(setting)
+    data_info_path = setting.get('data_info_path')
+    data_info = read_data_info(data_info_path)
     
-    data_info = read_data_info(get_model_dataset_info()['data_info_path'])
     if not data_info:
-        return {}
-    return data_info
+        logging.error("Unable to read dataset and model training information.")
+        return ""  # Only project description
+    
+    dataset_info = data_info.get('dataset_info', {})
+    model_training_info = data_info.get('model_training_info', [])
+
+    # Build the output string
+    output = " "
+
+    # Dataset Information
+    output += (
+        "Dataset Information: Description: " + dataset_info.get('description', 'N/A') + ". "
+        "Labels: "
+    )
+    labels = dataset_info.get('labels', {})
+    labels_str = ", ".join([f"{k}: {v}" for k, v in labels.items()])
+    output += labels_str + ". "
+
+    output += (
+        "Source: " + dataset_info.get('source', 'N/A') + ". "
+        "Version: " + dataset_info.get('version', 'N/A') + ". "
+        "Sample Count: "
+    )
+    sample_counts = dataset_info.get('sample_count', {})
+    sample_count_str = str(sample_counts)
+    output += sample_count_str + ". "
+
+    output += "Additional Info: "
+    additional_info = dataset_info.get('additional_info', {})
+    additional_info_str = ", ".join([f"{k}: {v}" for k, v in additional_info.items()])
+    output += additional_info_str + ". "
+
+    # Model Training Information
+    output += "Model Training Information: "
+    for model in model_training_info:
+        model_name = model.get('model_name', 'Unknown Model')
+        method_type = model.get('method_type', 'Unknown')
+        training_time = model.get('training_time', 'Unknown')
+        evaluation_results = model.get('evaluation_results', {})
+        accuracy = evaluation_results.get('accuracy', 'N/A')
+        precision = evaluation_results.get('precision', 'N/A')
+        recall = evaluation_results.get('recall', 'N/A')
+        f1 = evaluation_results.get('f1', 'N/A')
+        confusion_matrix = evaluation_results.get('confusion_matrix', [])
+        confusion_matrix_str = "; ".join([str(row) for row in confusion_matrix])
+
+        output += (
+            f"Model Name: {model_name}, Method Type: {method_type}, Training Time: {training_time}, "
+            f"Evaluation Results: Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}, "
+            f"Confusion Matrix: [{confusion_matrix_str}]. "
+        )
+
+    return output

@@ -1,6 +1,6 @@
 data:
-  raw_data_path: ./data/raw/
-  # raw_data_path: ./data/BreastMNIST/
+  # raw_data_path: ./data/raw/
+  raw_data_path: ./data/BreastMNIST/
   processed_data_path: ./data/processed/
   image_size: 224
   batch_size: 32
@@ -12,7 +12,7 @@ method:
 
   supervised:
     model:
-      name: vit           # Available options: resnet50, alexnet, vgg16, vit
+      name: alexnet           # Available options: resnet50, alexnet, vgg16, vit
       pretrained: False
       num_classes: 2
       learning_rate: 0.0001
@@ -61,8 +61,8 @@ method:
         device: cuda                    # 'cuda' or 'cpu'
 
 training:
-  checkpoint_path: ./checkpoints/
-  # checkpoint_path: ./checkpoints/BreastMNIST/
+  # checkpoint_path: ./checkpoints/
+  checkpoint_path: ./checkpoints/BreastMNIST/
   save_every: 5
 
 evaluation:

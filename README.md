@@ -1,6 +1,5 @@
 # VisionaryLLM: An Extensible Framework for Enhancing Large Language Models with Domain-Specific Vision Tasks
 
-# [![python](https://img.shields.io/badge/-Python_3.7_%7C_3.8_%7C_3.9_%7C_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pytorch](https://img.shields.io/badge/PyTorch_1.9+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
 [![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/ashleve/lightning-hydra-template#license)
 ![flask](https://img.shields.io/badge/Flask-1.1.2-green)
@@ -14,6 +13,8 @@ VisionaryLLM addresses three fundamental limitations in current LLM applications
 3. **Integration Complexity**: Offering a systematic, unified approach for consistent integration across domains
 
 🌐 Project Demo: [https://cs5242-demo.silan.tech](https://cs5242-demo.silan.tech)
+
+demo-frontend-reposite: [https://github.com/Qingbolan/nus-cs5242-demo](https://github.com/Qingbolan/nus-cs5242-demo)
 
 ## System Architecture
 
@@ -101,6 +102,7 @@ python setup_data.py
 ### Configuration
 
 1. Create `.env` file in project root:
+
 ```plaintext
 # Required for LLM Integration
 OPENAI_API_KEY=<your_openai_api_key>
@@ -111,6 +113,7 @@ API_file_PREFIX="/DL-api/"
 ```
 
 2. Configure `config/config.yaml` for model settings:
+
 ```yaml
 data:
   # raw_data_path: ./data/raw/
@@ -195,19 +198,23 @@ evaluation:
 ## Running the Project
 
 1. Start the Flask Backend:
+
 ```bash
 # From project root
 python main.py
 ```
+
 Backend will be available at `http://localhost:5100`
 
 2. Train Models with command:
+
 ```bash
 # From project root
 python __pipeline_with_config.py
 ```
 
 3. deep learning enhance classification:
+
 ```bash
 python __classfication_test
 ```
@@ -404,11 +411,13 @@ predictions = anomaly_scores > threshold
 The framework has been validated in multiple domains:
 
 ### Structural Engineering
+
 - Crack detection in concrete structures
 - ResNet50 performance: 99.95% accuracy
 - Transparent defect localization through Grad-CAM
 
 ### Medical Imaging
+
 - Breast ultrasound tumor detection
 - 90.67% detection accuracy
 - Visualization of suspicious regions

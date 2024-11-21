@@ -1,7 +1,5 @@
 # VisionaryLLM: An Extensible Framework for Enhancing Large Language Models with Domain-Specific Vision Tasks
 
-![tumbor=Analysis visualization](./assets/tumbor=Analysis%20visualization.jpg)
-
 # [![python](https://img.shields.io/badge/-Python_3.7_%7C_3.8_%7C_3.9_%7C_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pytorch](https://img.shields.io/badge/PyTorch_1.9+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
 [![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/ashleve/lightning-hydra-template#license)
@@ -75,6 +73,10 @@ VisionaryLLM addresses three fundamental limitations in current LLM applications
 ├── ChestMNIST_download.py      # the fastest way for you to download the ChestMNIST dataset
 └── main.py                     # luanch the backend on localhost:5100
 ```
+
+## Demo(Medical consultation)
+
+![tumbor=Analysis visualization](./assets/tumbor=Analysis%20visualization.jpg)
 
 ## Project Setup
 

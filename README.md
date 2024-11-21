@@ -1,194 +1,226 @@
-# VisionaryLLM: An Extensible Framework for Enhancing Large Language Models with Doman-Specific Vision Tasks Using Deep Learning
+# VisionaryLLM: An Extensible Framework for Enhancing Large Language Models with Domain-Specific Vision Tasks
 
-[![python](https://img.shields.io/badge/-Python_3.7_%7C_3.8_%7C_3.9_%7C_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
+# [![python](https://img.shields.io/badge/-Python_3.7_%7C_3.8_%7C_3.9_%7C_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pytorch](https://img.shields.io/badge/PyTorch_1.9+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
 [![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/ashleve/lightning-hydra-template#license)
+![flask](https://img.shields.io/badge/Flask-1.1.2-green)
 
-This project focuses on the **Deep Learning Visual Analysis with LLM Integration**, aiming to develop a general framework that integrates traditional deep learning models with Large Language Models (LLMs) to enhance image understanding and visualization. By transforming complex visual tasks into efficient classification problems, we strive to create a system that not only automates detection processes but also provides interpretable and interactive insights through natural language.
+## Project Overview
 
-please see project website to learn more: [https://cs5242-demo.silan.tech](https://cs5242-demo.silan.tech)
+VisionaryLLM addresses three fundamental limitations in current LLM applications:
 
-## Table of Contents
+1. **Domain-Specific Analysis**: Enhancing LLMs with precise, domain-specific visual analysis capabilities
+2. **Visual Explanation**: Providing transparent insights into model decisions through Grad-CAM visualization
+3. **Integration Complexity**: Offering a systematic, unified approach for consistent integration across domains
 
-- [Project Motivation](#project-motivation)
-- [Code Structure](#code-structure)
-- [Project Setup](#project-setup)
-- [Dataset](#dataset)
-- [Intelligent Segmentation Strategy](#intelligent-segmentation-strategy)
-- [Models Implemented](#models-implemented)
-  - [Supervised Learning](#supervised-learning)
-    - [ResNet50](#resnet50)
-    - [AlexNet](#alexnet)
-    - [Vision Transformer (ViT)](#vision-transformer-vit)
-  - [Unsupervised Learning](#unsupervised-learning)
-    - [Deep Convolutional Autoencoder (DCAE)](#deep-convolutional-autoencoder-dcae)
-    - [Deep Convolutional Variational Autoencoder (DCVAE)](#deep-convolutional-variational-autoencoder-dcvae)
-    - [Anomaly Detection using Vision Transformers](#anomaly-detection-using-vision-transformers)
-- [Experimentation and Results](#experimentation-and-results)
-- [LLM Integration](#llm-integration)
-- [Usage](#usage)
-  - [Training](#training)
-  - [Evaluation](#evaluation)
-  - [Configuration](#configuration)
-- [Limitations](#limitations)
-- [Acknowledgements](#acknowledgements)
-- [License](#license)
+🌐 Project Demo: [https://cs5242-demo.silan.tech](https://cs5242-demo.silan.tech)
 
-## Project Motivation
+## System Architecture
 
-The rapid advancement of Large Language Models (LLMs) has revolutionized many aspects of artificial intelligence, yet their application in professional domains, particularly those requiring specialized visual analysis, remains significantly constrained. This limitation creates a critical gap between the theoretical capabilities of LLMs and their practical utility in professional settings.
+![System Architecture](./assets/image-20241121155346351.png)
 
-## Current Challenges and Research Gap
+### Project Structure
 
-The integration of LLMs with domain-specific visual tasks presents several compelling challenges that motivate our research:
-
-1. **Lack of Professional-Grade Analysis**
-
-   - Current LLMs, while capable of basic image interpretation, fall short in providing the quantifiable confidence levels required in professional settings
-   - Professional domains such as structural engineering and medical imaging demand precise measurements and reliable metrics that meet industry standards
-   - The absence of these capabilities limits the practical adoption of LLMs in critical professional applications
-2. **Black-Box Decision Making**
-
-   - Existing LLM implementations operate as black boxes, providing conclusions without transparent reasoning
-   - Professionals cannot verify the analysis process or understand how specific visual elements influence decisions
-   - This opacity poses significant risks in domains where decision validation is crucial for safety and compliance
-3. **Integration Complexity**
-
-   - The current landscape lacks a standardized framework for integrating LLMs with domain-specific visual tasks
-   - Organizations must develop custom solutions for each domain, leading to:
-     - Inconsistent implementations across different fields
-     - High development and maintenance costs
-     - Limited scalability and reusability
-
-## Key Objectives
-
-These challenges present a significant opportunity for innovation in the field of AI and computer vision. By developing VisionaryLLM, we aim to bridge the gap between general-purpose LLMs and specialized visual analysis requirements. Our framework addresses these limitations through:
-
-- **Standardized Integration**: A flexible architecture that simplifies the combination of vision models with LLMs
-- **Transparent Analysis**: Implementation of gradient-weighted class activation mapping (Grad-CAM) for result visualization
-- **Cross-Domain Applicability**: Demonstrated effectiveness in diverse fields, from structural engineering to medical imaging
-
-## Code Structure
-
-- **Backend**: `app`, run `main.py` to start the backend on https://localhost:5100
-- **Data Set and Backend photo stores:**
-  - `data/_input`: all the input data get from the frontend
-  - `data/_output`: all the deep learning models classification process generation by GradCAM
-  - `data/raw`: the crack dataset
-  - `data/{}other_data_set_name}`
-- **AI Agorithm and utils support:**
-  - **Data Loading and Preprocessing**: `src/data/dataset.py`, `src/data/preprocess.py`
-  - **Model Definitions**:
-    - `src/models/resnet_model.py`
-    - `src/models/alexnet_model.py`
-    - `src/models/vit_model.py`
-    - `src/models/autoencoder.py` (DCAE)
-    - `src/models/variational_autoencoder.py` (DCVAE)
-    - `src/models/vit_anomaly.py` (ViT Anomaly Detection)
-  - **Training Logic**:
-    - `src/training/trainer.py`
-    - `src/training/autoencoder_trainer.py`
-    - `src/training/variational_autoencoder_trainer.py`
-    - `src/training/vit_anomaly_trainer.py`
-  - **Evaluation Code**:
-    - `src/evaluation/evaluator.py`
-    - `src/evaluation/autoencoder_evaluator.py`
-    - `src/evaluation/variational_autoencoder_evaluator.py`
-    - `src/evaluation/vit_anomaly_evaluator.py`
-  - **LLM Integration**: `src/llm/agent.py`
-- **Configuration Files**: `config/config.yaml`, various files under `configs/`
+```
+├── app/                    # Flask Backend Service
+│   ├── routes/            # API endpoints
+│   │   └── chat_api.py       # API utilities
+│   └── __init__.py            # Flask application entry
+├── src/                   # AI Model Implementation
+│   ├── data/              # Data processing
+│   │   ├── dataset.py     # Dataset implementations
+│   │   └── preprocess.py  # Data preprocessing
+│   ├── models/            # Model architectures
+│   │   ├── resnet_model.py
+│   │   ├── alexnet_model.py
+│   │   ├── vit_model.py
+│   │   ├── autoencoder.py
+│   │   ├── variational_autoencoder.py
+│   │   └── vit_anomaly.py
+│   ├── training/          # Training implementations
+│   │   ├── trainer.py
+│   │   ├── autoencoder_trainer.py
+│   │   ├── variational_autoencoder_trainer.py
+│   │   └── vit_anomaly_trainer.py
+│   ├── evaluation/        # Evaluation implementations
+│   │   ├── evaluator.py
+│   │   ├── autoencoder_evaluator.py
+│   │   ├── variational_autoencoder_evaluator.py
+│   │   └── vit_anomaly_evaluator.py
+|   ├── utils/            # ALL interface provide by Deep learning model for backends   
+│   │   ├── classfication.py     # inference function call for backend(setting on config.yaml)
+│   │   └── training.py          # training and auto-evolute function call for backend
+│   └── llm/              # LLM integration
+│       └── agent.py	  # all the prompt template
+├── data/                  # Data Storage
+│   ├── _input/           # Frontend input storage
+│   ├── _output/          # Model output storage
+│   ├── raw/              # Raw dataset
+│   │   ├── Negative/     # Non-crack images
+│   │   └── Positive/     # Crack images
+│   └── {other_datasets}/ # Additional datasets
+├── checkpoints/          # all the model training and evolution files
+│   ├── ...               # default for the raw dataset(crack detection)
+│   └── {other_datasets}/ # Additional datasets
+├── config/               # Configuration files
+│   ├── config.yaml       # the core setting files for invidual training or framework running
+│   └──  # Additional datasets
+├── requirements.txt            # Project dependencies
+├── .env				        # the enviroment variable[!!!please edit before you run!!!]
+├── __pipeline_with_config.py   # training and evolution function test base on config.yaml 
+├── __classfication_test.py     # calssfication function test base on config.yaml 
+├── BreastMNIST_download.py     # the fastest way for you to download the BreastMNIST dataset
+├── ChestMNIST_download.py      # the fastest way for you to download the ChestMNIST dataset
+└── main.py                     # luanch the backend on localhost:5100
+```
 
 ## Project Setup
 
-Follow these steps to set up the project environment:
+### Environment Setup
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/Qingbolan/deep-learning-visual-analysis.git
 cd deep-learning-visual-analysis
 
-# Create a virtual environment
+# Set up environment
 conda create -n visual_analysis python=3.9
 conda activate visual_analysis
 
-# Install PyTorch according to your system specifications
-# Visit https://pytorch.org/get-started/locally/ for installation commands
-
-# Install project dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-# Create outputs directory
-mkdir outputs
+# Download datasets
+python setup_data.py
 ```
 
-Ensure that you have the prerequisites for [PyTorch](https://pytorch.org/) installed, compatible with your CUDA or CPU setup.
+### Configuration
 
-## Dataset
+1. Create `.env` file in project root:
+```plaintext
+# Required for LLM Integration
+OPENAI_API_KEY=<your_openai_api_key>
+OPENAI_API_BASE=<your_openai_api_base_url>
 
-For demonstration, we utilize the **Concrete Crack Images for Classification** dataset to validate our Deep Learning Visual Analysis framework. Please download the dataset from [Concrete Crack Images for Classification](https://data.mendeley.com/datasets/5y9wdsg2zt/2) and organize the images in the `data/raw/` directory as follows:
+SERVER_BASE_URL="http://127.0.0.1:5100"
+API_file_PREFIX="/DL-api/"
+```
+
+2. Configure `config/config.yaml` for model settings:
+```yaml
+data:
+  # raw_data_path: ./data/raw/
+  raw_data_path: ./data/BreastMNIST/
+  processed_data_path: ./data/processed/
+  image_size: 224
+  batch_size: 32
+  num_workers: 4
+  train_split: 0.8
+
+method:
+  type: supervised          # Available options: supervised, unsupervised
+
+  supervised:
+    model:
+      name: alexnet           # Available options: resnet50, alexnet, vgg16, vit
+      pretrained: False
+      num_classes: 2
+      learning_rate: 0.0001
+      weight_decay: 0.00001
+      num_epochs: 10
+      device: cuda
+
+  unsupervised:
+    method: dcae       # Available options: dcae, dcvae, vit_anomaly
+
+    dcae:
+      model:
+        name: dcae
+        encoded_space_dim: 256    # add encoded space dimension
+        learning_rate: 0.0001
+        weight_decay: 0.00001
+        num_epochs: 10
+        device: cuda
+
+    dcvae:
+      model:
+        name: dcvae
+        encoded_space_dim: 256    # To VAE, this is the encoded space dimension
+        learning_rate: 0.0001
+        weight_decay: 0.00001
+        num_epochs: 10
+        device: cuda
+
+    vit_anomaly:
+      model:
+        name: vit_anomaly
+        pretrained: true                # Whether to use pretrained ViT weights
+        num_classes: 2                  # Number of classification classes
+
+        # Additional hyperparameters for ViTAnomalyDetector
+        img_size: 224                   # Input image size
+        patch_size: 16                  # Patch size for ViT
+        embed_dim: 768                  # Embedding dimension
+        num_heads: 12                   # Number of attention heads
+        mlp_dim: 3072                   # MLP layer dimension
+        num_layers: 12                  # Number of Transformer encoder layers
+
+        learning_rate: 0.0001           # Optimizer learning rate
+        weight_decay: 0.00001           # Optimizer weight decay
+        num_epochs: 1                   # Total number of training epochs
+        device: cuda                    # 'cuda' or 'cpu'
+
+training:
+  # checkpoint_path: ./checkpoints/
+  checkpoint_path: ./checkpoints/BreastMNIST/
+  save_every: 5
+
+evaluation:
+  metrics: ["accuracy", "precision", "recall", "f1", "confusion_matrix"]
+  clustering_metrics: ["silhouette_score", "calinski_harabasz_score", "davies_bouldin_score"]
+  anomaly_detection:
+    dcae:
+      threshold: 0.2                  # Example threshold, will be dynamically determined
+    dcvae:
+      threshold: 0.2                  # Example threshold, adjust based on data
+    vit_anomaly:
+      threshold: 0.2                  # Example threshold, adjust based on data
 
 ```
-data/
-├── raw/
-│   ├── Negative/
-│   └── Positive/
-```
 
-- **Negative**: Images without cracks.
-- **Positive**: Images with cracks.
+## Running the Project
 
-*Note*: The framework is designed to accommodate various datasets, enabling its application to diverse visual tasks beyond crack detection.
-
+1. Start the Flask Backend:
 ```bash
-# also you can run the following script to get other dataset
-python BreastMNIST_download.py
-python ChestMNIST_download.py
+# From project root
+python main.py
+```
+Backend will be available at `http://localhost:5100`
+
+2. Train Models with command:
+```bash
+# From project root
+python __pipeline_with_config.py
 ```
 
-## Intelligent Segmentation Strategy
+3. deep learning enhance classification:
+```bash
+python __classfication_test
+```
 
-### Innovative Image Segmentation: Transforming Complex Visual Tasks into Efficient Classification Problems
+## API Endpoints
 
-Our **Intelligent Segmentation** strategy revolutionizes the approach to complex visual tasks by decomposing them into manageable classification units. This method enhances processing efficiency, accuracy, and scalability, making it suitable for a wide range of applications.
+```plaintext
+POST /DL-api/api/completion
+- Analyzes images using the specified model
+- Supports multiple image formats
+- Returns analysis results and visualizations
 
-#### Core Principles:
+POST /DL-api/api/upload/ChatFiles
+- upload image files
+```
 
-1. **Image Partitioning**: Dividing high-resolution or complex images into smaller, uniform patches to simplify the classification process.
-2. **Local Feature Extraction**: Applying deep learning models to each patch to identify the presence or absence of specific features or anomalies.
-3. **Result Integration**: Aggregating patch-level classifications to form a comprehensive understanding of the entire image, enabling precise localization and analysis.
-
-#### Implementation Steps:
-
-1. **Image Segmentation**:
-
-   - **Grid-Based Partitioning**: Splitting the image into fixed-size patches (e.g., 16x16 pixels) to ensure uniformity.
-   - **Adaptive Segmentation**: Utilizing algorithms that adjust patch sizes based on image content for better feature representation.
-2. **Feature Extraction and Classification**:
-
-   - **Supervised Learning Models**: Employing architectures like ResNet50, AlexNet, and Vision Transformer (ViT) to classify each patch.
-   - **Unsupervised Learning Models**: Utilizing Autoencoder, Variational Autoencoder (VAE), and ViT-based anomaly detection to identify deviations from normal patterns.
-3. **Result Aggregation and Visualization**:
-
-   - **Matrix Mapping**: Creating a matrix that maps the classification results of each patch, highlighting areas of interest (e.g., cracks) with distinct markers.
-   - **LLM Integration**: Leveraging LLMs to interpret and describe the aggregated results, providing natural language summaries and insights.
-
-#### Advantages:
-
-- **Enhanced Efficiency**: Parallel processing of patches reduces computational load and accelerates overall analysis.
-- **Improved Accuracy**: Localized classification ensures detailed detection of subtle anomalies.
-- **Scalability**: The framework can easily scale to accommodate varying image sizes and multiple visual tasks.
-- **Flexibility**: Applicable to diverse domains such as structural health monitoring, industrial inspection, and medical imaging.
-
-#### Limitations and Mitigations:
-
-- **Edge Effects**: Potential loss of contextual information at patch boundaries, mitigated by overlapping segmentation and contextual fusion techniques.
-- **Global Context Loss**: Addressed by integrating global features through transformer-based models and post-processing methods.
-- **Resource Intensity**: Optimized through efficient model architectures and distributed computing strategies.
-- **Data Annotation**: Increased complexity in labeling patch-level data, especially for unsupervised tasks, addressed by leveraging automated or semi-automated annotation tools.
-
-Our Intelligent Segmentation strategy streamlines complex visual tasks, setting the foundation for integrating advanced analytical capabilities through LLMs, and paving the way for intelligent and interactive systems.
-
-## Models Implemented
+## Model Implementations
 
 ### Supervised Learning
 
@@ -344,130 +376,74 @@ anomaly_scores = model.get_anomaly_score(images)
 predictions = anomaly_scores > threshold
 ```
 
-## Experimentation and Results
+## Experimental Results(on Crack detections)
 
-We conducted extensive experiments to evaluate the performance of our implemented models within the Deep Learning Visual Analysis framework.
+### Classification Performance
 
-### Performance Metrics
+| Model    | Accuracy | Recall | Precision | F1 Score | Runtime (mins) |
+| -------- | -------- | ------ | --------- | -------- | -------------- |
+| AlexNet  | 0.9980   | 0.9987 | 0.9972    | 0.9980   | 13.14          |
+| ResNet50 | 0.9995   | 0.9998 | 0.9993    | 0.9995   | 39.76          |
+| VGG16    | 0.9982   | 0.9975 | 0.9982    | 0.9979   | 77.59          |
+| ViT      | 0.9941   | 0.9990 | 0.9892    | 0.9941   | 120.48         |
 
-- **Accuracy**
-- **Precision**
-- **Recall**
-- **F1 Score**
-- **Confusion Matrix**
+### Anomaly Detection Performance
 
-### Experimental Findings
+| Model       | Accuracy | Recall | Precision | F1 Score | Runtime (mins) |
+| ----------- | -------- | ------ | --------- | -------- | -------------- |
+| Standard AE | 0.9557   | 0.5359 | 0.9696    | 0.6868   | 13.91          |
+| VAE         | 0.9418   | 0.3775 | 0.9557    | 0.5413   | 15.94          |
+| ViT Anomaly | 0.9968   | 0.9987 | 0.9947    | 0.9967   | 22.48          |
 
-1. **ResNet50** achieved high accuracy due to its deep architecture and residual connections, effectively learning complex features.
-2. **AlexNet** demonstrated reasonable performance but was outperformed by deeper networks like ResNet50 and ViT.
-3. **Vision Transformer (ViT)** showcased the potential of transformer architectures in image classification, achieving competitive results with superior global feature capture.
-4. **Deep Convolutional Autoencoder (DCAE)** and **Deep Convolutional Variational Autoencoder (DCVAE)** provided valuable insights through feature extraction and anomaly detection, aiding in understanding underlying data representations.
-5. **Anomaly Detection using ViT** proved effective in identifying irregular patterns without explicit labels, highlighting its utility in scenarios with limited annotated data.
-6. **Intelligent Segmentation** strategy enhanced overall detection accuracy by enabling detailed local analysis and efficient processing.
+## Cross-Domain Applications
 
-### Observations
+The framework has been validated in multiple domains:
 
-- **Data Augmentation**: Implementing techniques such as rotation, scaling, and flipping improved model generalization.
-- **Hyperparameter Tuning**: Optimizing learning rates, batch sizes, and model-specific parameters was crucial for achieving optimal performance.
-- **Computational Resources**: Transformer-based models required significant computational power, necessitating efficient training strategies and resource management.
-- **Unsupervised Learning**: Incorporating unsupervised methods provided additional layers of analysis, enabling the detection of anomalies beyond supervised capabilities.
+### Structural Engineering
+- Crack detection in concrete structures
+- ResNet50 performance: 99.95% accuracy
+- Transparent defect localization through Grad-CAM
 
-## LLM Integration
+### Medical Imaging
+- Breast ultrasound tumor detection
+- 90.67% detection accuracy
+- Visualization of suspicious regions
 
-To elevate the analytical capabilities of our system, we integrated Large Language Models (LLMs) to interpret and interact with the visual data classifications intelligently.
-
-### Features:
-
-- **Automated Reporting**: LLMs generate comprehensive reports based on classification results, summarizing key findings and insights.
-- **Interactive Queries**: Users can interact with the system using natural language queries, receiving detailed explanations and analyses.
-- **Contextual Understanding**: LLMs enhance the system's ability to understand contextual relationships within the data, providing more meaningful interpretations.
-
-### Implementation:
-
-- **Agent System**: Developed an agent that serves as an intermediary between the visual classification module and the LLM, facilitating seamless communication and data exchange.
-- **Task Automation**: Enabled the LLM to perform tasks such as counting detected anomalies, marking their locations, and providing trend analyses.
-- **User Interface**: Designed a natural language interface allowing users to interact with the system effortlessly, enhancing usability and accessibility.
-
-### Benefits:
-
-- **Enhanced Interpretability**: Transforms raw classification data into understandable and actionable insights.
-- **Improved User Experience**: Facilitates intuitive interactions, making the system accessible to users without technical expertise.
-- **Scalable Intelligence**: Allows the system to adapt and respond to a wide range of queries and analytical needs dynamically.
-
-## Usage
-
-### Training
-
-To train a model, modify the `config/config.yaml` file to set the desired model and parameters.
-
-**Example: To train with ResNet50:**
-
-```yaml
-model:
-  name: resnet50
-  pretrained: true
-  num_classes: 2
-  # Other model-specific parameters
-```
-
-Then run:
-
-```bash
-python main.py
-```
-
-### Evaluation
-
-After training, the model will automatically be evaluated on the validation set, and metrics will be displayed. To perform additional evaluation:
-
-```bash
-python main.py --evaluate --ckpt_path path/to/checkpoint.pth
-```
-
-### Configuration
-
-All configurations are managed through YAML files for clarity and flexibility. Parameters can also be overridden via command-line arguments.
-
-**Example:**
-
-```bash
-python main.py model.name=efficientnet model.pretrained=False
-```
-
-## Limitations
-
-While our framework provides a structured approach to integrating deep learning models with LLMs for visual analysis, it is not without limitations:
-
-1. **Edge Effects**: Splitting images into patches can result in loss of contextual information at the boundaries. Although overlapping segmentation can mitigate this, it adds computational overhead.
-2. **Global Context Loss**: The patch-based approach may fail to capture the overall structure and global dependencies within an image, potentially affecting detection accuracy in complex scenarios.
-3. **Resource Intensity**: Processing large numbers of patches, especially with transformer-based models, requires substantial computational resources, which may not be feasible for all applications.
-4. **Data Annotation Complexity**: Annotating data at the patch level increases the labeling effort, particularly for unsupervised tasks where anomaly labels are not readily available.
-5. **Integration Complexity**: Combining deep learning models with LLMs introduces additional layers of complexity in system design and requires careful coordination to ensure seamless interaction and data flow.
-
-Future work will focus on addressing these limitations by exploring more advanced segmentation techniques, optimizing computational efficiency, and enhancing the integration mechanisms between deep learning models and LLMs.
-
-## Acknowledgements
-
-We extend our gratitude to the providers of the [Concrete Crack Images for Classification](https://data.mendeley.com/datasets/5y9wdsg2zt/2) dataset.
-
-**Citations:**
-
-- Özgenel, Ç.F., & Gönenç Sorguç, A. (2018). *Performance Comparison of Pretrained Convolutional Neural Networks on Crack Detection in Buildings*. ISARC 2018, Berlin.
-- Zhang, L., Yang, F., Zhang, Y. D., & Zhu, Y. J. (2016). *Road Crack Detection Using Deep Convolutional Neural Network*. IEEE International Conference on Image Processing (ICIP). [doi:10.1109/ICIP.2016.7533052](http://doi.org/10.1109/ICIP.2016.7533052)
-
-## License&&author
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-*Note*: This project represents an attempt to develop a general framework integrating traditional deep learning techniques with Large Language Models (LLMs) for enhanced visual analysis. The implementations and findings reflect thoughtful application and critical thinking in applying established models to practical, real-world problems. We have meticulously compared different architectures, implemented both supervised and unsupervised learning methods, and provided comprehensive documentation to ensure understanding and reproducibility.
-
-Feel free to explore the codebase, run experiments, and contribute to the project!
-
-**Project GitHub Link**: [https://github.com/Qingbolan/Vision-LLM-Integration](https://github.com/Qingbolan/Vision-LLM-Integration)
+## Team
 
 <table>
   <tr>
-    <td align="center"><a href="https://github.com/Qingbolan"><img src="https://github.com/Qingbolan.png" width="100px;" alt=""/><br /><sub><b>HU SILAN</b></sub></a><br /><a href="https://github.com/Qingbolan/deep-learning-visual-analysis" title="Code">💻</a></td>
-    <td align="center"><a href="#"><img src="https://via.placeholder.com/100" width="100px;" alt=""/><br /><sub><b>Tan Kah Xuan</b></sub></a><br /><a href="https://github.com/Qingbolan/deep-learning-visual-analysis" title="Code">💻</a></td>
+    <td align="center">
+      <a href="https://github.com/Qingbolan">
+        <img src="https://github.com/Qingbolan.png" width="100px;" alt=""/>
+        <br /><sub><b>HU SILAN</b></sub>
+      </a>
+      <br />
+      <a href="mailto:e1373455@u.nus.edu">📧</a>
+    </td>
+    <td align="center">
+      <a href="#">
+        <img src="https://via.placeholder.com/100" width="100px;" alt=""/>
+        <br /><sub><b>Tan Kah Xuan</b></sub>
+      </a>
+      <br />
+      <a href="mailto:e0692305@u.nus.edu">📧</a>
+    </td>
   </tr>
 </table>
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Citation
+
+```bibtex
+@misc{hu2024visionaryllm,
+  title={VisionaryLLM: An Extensible Framework for Enhancing Large Language Models with Domain-Specific Vision Tasks},
+  author={Hu, Silan and Tan, Kah Xuan},
+  year={2024},
+  publisher={GitHub},
+  howpublished={\url{https://github.com/Qingbolan/Vision-LLM-Integration}}
+}
+```
